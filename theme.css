@@ -1,0 +1,79 @@
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: #f5faff;
+  color: #0D47A1;
+  margin: 0;
+  padding: 0;
+}
+
+.header {
+  text-align: center;
+  padding: 30px 0;
+  font-size: 32px;
+  font-weight: bold;
+  color: #0D47A1;
+}
+
+.product-card {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+  padding: 20px;
+  margin: 10px;
+  text-align: center;
+  transition: transform 0.2s;
+}
+
+.product-card:hover {
+  transform: scale(1.03);
+}
+
+.product-card img {
+  max-width: 100%;
+  border-radius: 8px;
+  height: 200px;
+  object-fit: cover;
+}
+
+.product-card h3 {
+  font-size: 18px;
+  margin: 10px 0 5px 0;
+}
+
+.product-card .price {
+  color: #0D47A1;
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.product-card button {
+  background-color: #0D47A1;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-top: 10px;
+  width: 100%;
+}
+
+.product-card button:hover {
+  background-color: #093974;
+}
+
+/* Responsive columns */
+@media (max-width: 768px) {
+  .stColumns > div {
+      flex: 0 0 100% !important;
+      max-width: 100% !important;
+  }
+}
+
+.carousel img.thumbnail {
+  width: 50px;
+  height: 50px;
+  object-fit: cover;
+  margin: 3px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+}

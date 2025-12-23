@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "jerseyshopghana",
+  "private_key_id": "79a4b64d20fabbbeb904cd778dd69fe849ea2a1e",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDY+cyP3eY3KICK\n3lKCds85D+LwC2hmbEDybq1qT0T7OXWzf8YL/58x5cga9IhmAwGtcmSQpcoFBsjy\nkC4Y399ljLJcsqiOKlY0CdoC6fzg9vQJ+RjCs5BlTB/7m/wp5okpaXCWACoj0W84\nRPorX3g/W0kGqjkzrRu85JTGrTM2UmbhwmWoIJr18xntEbjwTa4X5loVIlHiW9gV\noA0cD5QKChB0f7Lhqu3Kl2q2YfXJ7/jEj3zMqaecBEUEnzpAfdRu81E+JPLRAdlp\ntxsOynMPf4IBy2JYUY0EVdXOsm5diRvs+JzkRLRbHpib/6R7uYOh61jVnAxGYh3E\nNJ8x0M8BAgMBAAECggEANCW9U2pqdSFH25hZTj/NyBIYYcbsHYmxBlMxXJaWpqaF\nslFoQOP719s4/7l7usDIO2592wHtjs21qA6c9Z+AqoBpMbxCpIBqXXFsszyXaV4R\nAwCaQdk0QBROr4Mq1MsydgCAbZy2hAtG5sg1NA1q8hc3cuGgg9n8C6cIVsOzxj8Q\nSOG79PhlGeUkqhGvP4ZEsbbv3wg4ydOMyDSz4Ee0+lsW6tPSKEcl2Yt4Dfbd9wWL\nX1wLk9+S0NZIIMRIAu/2F9/jQcr1Ig5ppTep15u7XWRgTwwlnD++N6xNRJkmL/+9\nUIGZe3DW+15lDqbcaMggmlZ3fMy+rbN5tcw/ZjKxUQKBgQD4H22No0b30NEJpDMB\nLbw1meFM5BBK3BbWQhj9bwbdsrmvCg6e3T8vLxnhxlIUXuzyNYmdxfQ2JV7cK69c\nV0E1VAuwkpuk6E+Q+6H07XdacMz4JRB7/Y2+D4zNMVEYkkjlXA+XW/lRWFmX+0Y+\nxSjUL0OU5Qgvge0YdPakrmOtJQKBgQDf3TrPKnhQREDi5yr82Q3NVTbwQw+XqJkv\n/RQWLWgQZccrNq4sWKemm1bDDRt4VA3syHhj8azNPLPsi05p7TP1TA3R458qbbfD\n2DWSlOPQEJYA06t3EHNhna1nlRF0l0JFrWMELsjJnLo8cBjEv/eHFZLZx4TWPiPt\nm7qm0dyJrQKBgQCUHKaX4vyNF8CAody0emmcEYRVEtrK5QBY29HxDuKpWnPPEhDS\nMj3yW4p2pJ0Aff2xQ9YnMTBrVfl/MjCWzZsmS0pDF/EDCo3cfOkbvNj/StB/3Bgv\n+5Yt+zhQkHzZTxFmoILKFmQIc9XfjGZNOAH8T05nRiSRv1wZulA008i6ZQKBgHUY\nWvKR3GzfxrDpCetH/ZgxwpLaAQXrAnW/gwo2pgAtvIg2CdTYapkTF8bezEecb8wy\n8AYXG7Qe1F4eX924XT0pkvD+hvrCeSTPqvYJO0BR7KRyE3Yr/K5Ks7FCn+bEV73q\ne6hscEpE2IVUfSAs6WSXPED9w9Xsmw5mLrOjgh/hAoGAFERyTXl5kUMaaitnp9eb\nj/DQzJDn6lB5ZNST+gwn1bbKnYRPrbfznNxgRkQ2cgDizUbdpervs07aw5TMVpxZ\nAEPNA1pjP/QhLaOqWAxhE16m64SouULaXQy5a6eqek2ksjVdswhuVdpFrzCznCfQ\nmSIQJ7pjl+dBuKvrTGslWT8=\n-----END PRIVATE KEY-----\n",
+  "client_email": "firebase-adminsdk-fbsvc@jerseyshopghana.iam.gserviceaccount.com",
+  "client_id": "110391713599394564503",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-fbsvc%40jerseyshopghana.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
