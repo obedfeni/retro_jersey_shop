@@ -1,27 +1,18 @@
-# firebase.py
 import json
 import streamlit as st
 import firebase_admin
 from firebase_admin import credentials, firestore, storage
 
-# Load Firebase key from Streamlit secrets
-try:
-    firebase_key_str = st.secrets["FIREBASE_KEY"]
-except KeyError:
-    st.error("FIREBASE_KEY not found in Streamlit secrets!")
-    st.stop()
+# Read FIREBASE_KEY from secrets
+key_str = st.secrets["FIREBASE_KEY"]
 
-# Convert JSON string to dict
-try:
-    firebase_json = json.loads(firebase_key_str)
-except json.JSONDecodeError as e:
-    st.error(f"Invalid Firebase JSON: {e}")
-    st.stop()
+# Parse JSON
+firebase_json = json.loads(key_str)
 
-# Fix line breaks in private_key
-firebase_json["private_key"] = firebase_json["private_key"].replace("\\n", "\n")
+# Ensure private_key newlines are real
+firebase_json["private_key"] = firebase_json["private_key"].encode().decode("unicode_escape")
 
-# Initialize Firebase only once
+# Initialize Firebase once
 if not firebase_admin._apps:
     cred = credentials.Certificate(firebase_json)
     firebase_admin.initialize_app(
@@ -29,6 +20,5 @@ if not firebase_admin._apps:
         {"storageBucket": f"{firebase_json['project_id']}.appspot.com"}
     )
 
-# Firestore and Storage clients
 db = firestore.client()
 bucket = storage.bucket()
