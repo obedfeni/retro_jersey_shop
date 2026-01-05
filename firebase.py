@@ -1,43 +1,36 @@
 import streamlit as st
 from firebase_admin import credentials, initialize_app, firestore
 
-# Load Firebase service account from Streamlit secrets (already a dict)
+# Get Firebase key directly as dict (no json.loads!)
 firebase_json = dict(st.secrets["FIREBASE_KEY"])
 
-# Convert escaped \n into real newlines in private key
+# Convert escaped newlines in private key
 firebase_json["private_key"] = firebase_json["private_key"].replace("\\n", "\n")
 
-# Initialize Firebase app only once
-if not hasattr(st.session_state, "firebase_initialized"):
+# Initialize Firebase once
+if "firebase_initialized" not in st.session_state:
     cred = credentials.Certificate(firebase_json)
     initialize_app(cred)
-    st.session_state.firebase_initialized = True
+    st.session_state["firebase_initialized"] = True
 
 # Firestore client
 db = firestore.client()
 
 
 # -------------------------------
-# PRODUCT FUNCTIONS
+# PRODUCTS
 # -------------------------------
-
 def get_products():
-    products_ref = db.collection("products")
-    docs = products_ref.stream()
     products = []
-
-    for doc in docs:
-        data = doc.to_dict()
-        data["id"] = doc.id
-        products.append(data)
-
+    for doc in db.collection("products").stream():
+        item = doc.to_dict()
+        item["id"] = doc.id
+        products.append(item)
     return products
 
 
 # -------------------------------
-# ORDER FUNCTIONS
+# ORDERS
 # -------------------------------
-
 def place_order(order_data):
-    orders_ref = db.collection("orders")
-    orders_ref.document(order_data["id"]).set(order_data)
+    db.collection("orders").document(order_data["id"]).set(order_data)
