@@ -8,9 +8,37 @@ import base64
 # --- Page Config ---
 st.set_page_config(page_title="Retro Jersey Shop", layout="wide")
 
-# --- Load CSS ---
-with open("theme.css") as f:
-    st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+# --- Hide Streamlit menu, footer, header ---
+_hide_style = """
+<style>
+#MainMenu {visibility: hidden;}
+footer {visibility: hidden;}
+header {visibility: hidden;}
+</style>
+"""
+st.markdown(_hide_style, unsafe_allow_html=True)
+
+# --- Blue & White custom theme ---
+_custom_style = """
+<style>
+html, body, .stApp { background: #f0f6ff; color: #0d1b2a; }
+h1, h2, h3, h4, h5 { color: #1e3a8a; }
+.stButton>button {
+  background: #2563eb; color: #fff; border: none; border-radius: 12px;
+  padding: .6em 1.1em; font-weight: 600;
+}
+.stButton>button:hover { background: #1e40af; }
+.stTextInput>div>div>input {
+  border: 1px solid #2563eb; border-radius: 10px; padding: .55em .7em;
+}
+.block-card {
+  background: #ffffff; border-radius: 14px; padding: 16px 18px;
+  box-shadow: 0 6px 18px rgba(0,0,0,.06); margin: 10px 0;
+}
+.small { color:#334155; font-size:.92rem; }
+</style>
+"""
+st.markdown(_custom_style, unsafe_allow_html=True)
 
 # --- Google Sheets Auth ---
 scope = [
@@ -28,11 +56,8 @@ orders_sheet = client.open("retro_jersey_shop").worksheet("orders")
 products_df = pd.DataFrame(products_sheet.get_all_records())
 orders_df = pd.DataFrame(orders_sheet.get_all_records())
 
-# ------------------------
-# Navigation
-# ------------------------
-# Admin link is unique and private
-admin_key = "my-unique-admin-link-123"  # change to your unique key
+# --- Admin link (private) ---
+admin_key = "my-unique-admin-link-123"  # Change to your secret key
 url_params = st.experimental_get_query_params()
 page = "Shop"
 if "admin" in url_params and url_params["admin"][0] == admin_key:
@@ -46,27 +71,25 @@ if page == "Shop":
     st.markdown("<p style='text-align:center;'>High-quality retro jerseys delivered to your door!</p>", unsafe_allow_html=True)
     st.markdown("---")
 
+    # Responsive grid
     num_columns = 3
     cols = st.columns(num_columns)
-
     for idx, row in products_df.iterrows():
         col = cols[idx % num_columns]
         with col:
-            st.markdown(f"<div class='product-card'>", unsafe_allow_html=True)
+            st.markdown(f"<div class='block-card'>", unsafe_allow_html=True)
             st.image(row["image_url"], use_column_width='always')
             st.markdown(f"<h3>{row['name']}</h3>", unsafe_allow_html=True)
-            st.markdown(f"<p>{row['description']}</p>", unsafe_allow_html=True)
+            st.markdown(f"<p class='small'>{row['description']}</p>", unsafe_allow_html=True)
             st.markdown(f"<p><strong>Price: ${row['price']}</strong></p>", unsafe_allow_html=True)
-
-            # Button to go to order page for this product
+            
             order_button = st.button(f"Order {row['name']}", key=f"orderbtn_{row['id']}")
             if order_button:
                 st.session_state["selected_product"] = row["id"]
                 st.experimental_rerun()
-
             st.markdown("</div>", unsafe_allow_html=True)
 
-    # If a product was selected, show order form
+    # ORDER FORM
     if "selected_product" in st.session_state:
         selected_product_id = st.session_state["selected_product"]
         product = products_df[products_df["id"] == selected_product_id].iloc[0]
@@ -93,11 +116,11 @@ if page == "Shop":
                     st.warning("⚠ Fill all fields correctly")
 
     # Contact info
-    st.markdown("<div class='contact-info'>", unsafe_allow_html=True)
+    st.markdown("<div class='block-card'>", unsafe_allow_html=True)
     st.markdown("<h3>Contact Us</h3>", unsafe_allow_html=True)
     st.markdown("<p>Email: retroshop@example.com</p>", unsafe_allow_html=True)
-    st.markdown("<p>Phone/WhatsApp: +233541468102</p>", unsafe_allow_html=True)
-    st.markdown("<p>snapchat: @retroshop</p>", unsafe_allow_html=True)
+    st.markdown("<p>Phone/WhatsApp: +233 123 456 789</p>", unsafe_allow_html=True)
+    st.markdown("<p>Instagram: @retroshop</p>", unsafe_allow_html=True)
     st.markdown("</div>", unsafe_allow_html=True)
 
 # ==========================
@@ -130,5 +153,5 @@ if page == "Admin Dashboard":
 
     # View orders
     st.subheader("Received Orders")
-    orders_df = pd.DataFrame(orders_sheet.get_all_records())  # reload latest orders
+    orders_df = pd.DataFrame(orders_sheet.get_all_records())  # reload latest
     st.dataframe(orders_df)
