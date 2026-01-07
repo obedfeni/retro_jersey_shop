@@ -46,9 +46,14 @@ scope = [
     "https://www.googleapis.com/auth/drive"
 ]
 
-creds_dict = st.secrets["gcp_service_account"]
-creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
+import json
+
+with open("service_account.json") as f:
+    creds_data = json.load(f)
+
+creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_data, scope)
 client = gspread.authorize(creds)
+
 
 # --- Load Sheets ---
 products_sheet = client.open("retro_jersey_shop").worksheet("products")
@@ -155,3 +160,4 @@ if page == "Admin Dashboard":
     st.subheader("Received Orders")
     orders_df = pd.DataFrame(orders_sheet.get_all_records())  # reload latest
     st.dataframe(orders_df)
+
