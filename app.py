@@ -4,6 +4,7 @@ import streamlit as st
 from oauth2client.service_account import ServiceAccountCredentials
 from datetime import datetime
 import base64
+import json
 
 # --- Page Config ---
 st.set_page_config(page_title="Retro Jersey Shop", layout="wide")
@@ -45,8 +46,6 @@ scope = [
     "https://www.googleapis.com/auth/spreadsheets",
     "https://www.googleapis.com/auth/drive"
 ]
-
-import json
 
 with open("service_account.json") as f:
     creds_data = json.load(f)
@@ -160,4 +159,5 @@ if page == "Admin Dashboard":
     st.subheader("Received Orders")
     orders_df = pd.DataFrame(orders_sheet.get_all_records())  # reload latest
     st.dataframe(orders_df)
+
 
