@@ -1,15 +1,24 @@
-import gspread
-import pandas as pd
+# ==========================
+# Retro Jersey Shop - Final App
+# ==========================
+
 import streamlit as st
+import pandas as pd
+import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 from datetime import datetime
 import base64
 import json
+import os
 
+# ==========================
 # --- Page Config ---
+# ==========================
 st.set_page_config(page_title="Retro Jersey Shop", layout="wide")
 
-# --- Hide Streamlit menu, footer, header ---
+# ==========================
+# --- Hide Streamlit UI ---
+# ==========================
 _hide_style = """
 <style>
 #MainMenu {visibility: hidden;}
@@ -19,7 +28,9 @@ header {visibility: hidden;}
 """
 st.markdown(_hide_style, unsafe_allow_html=True)
 
-# --- Blue & White custom theme ---
+# ==========================
+# --- Custom Blue & White Theme ---
+# ==========================
 _custom_style = """
 <style>
 html, body, .stApp { background: #f0f6ff; color: #0d1b2a; }
@@ -41,47 +52,79 @@ h1, h2, h3, h4, h5 { color: #1e3a8a; }
 """
 st.markdown(_custom_style, unsafe_allow_html=True)
 
-# --- Google Sheets Auth ---
+# ==========================
+# --- Google Sheets Authentication ---
+# ==========================
 scope = [
     "https://www.googleapis.com/auth/spreadsheets",
     "https://www.googleapis.com/auth/drive"
 ]
 
+# Load service_account.json (uploaded as secret file on Render)
 with open("service_account.json") as f:
     creds_data = json.load(f)
 
 creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_data, scope)
 client = gspread.authorize(creds)
 
-
-# --- Load Sheets ---
+# Open Sheets
 products_sheet = client.open("retro_jersey_shop").worksheet("products")
 orders_sheet = client.open("retro_jersey_shop").worksheet("orders")
 products_df = pd.DataFrame(products_sheet.get_all_records())
-orders_df = pd.DataFrame(orders_sheet.get_all_records())
-
-# --- Admin link (private) ---
-admin_key = "my-unique-admin-link-123"  # Change to your secret key
-url_params = st.experimental_get_query_params()
-page = "Shop"
-if "admin" in url_params and url_params["admin"][0] == admin_key:
-    page = "Admin Dashboard"
 
 # ==========================
-# SHOP PAGE
+# --- Admin Login Setup ---
+# ==========================
+# Use environment variables for security on Render
+ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "retro_admin")
+ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "RetroJersey2026!")
+
+if "admin_logged_in" not in st.session_state:
+    st.session_state.admin_logged_in = False
+
+# Admin login unique link
+url_params = st.query_params
+show_admin_login = url_params.get("admin_login", ["false"])[0] == "true"
+
+# --- Login / Logout Functions ---
+def admin_login():
+    st.markdown("<h2>Admin Login</h2>", unsafe_allow_html=True)
+    username = st.text_input("Username")
+    password = st.text_input("Password", type="password")
+    if st.button("Login"):
+        if username == ADMIN_USERNAME and password == ADMIN_PASSWORD:
+            st.session_state.admin_logged_in = True
+            st.success("✅ Login successful!")
+            st.experimental_rerun()
+        else:
+            st.error("❌ Incorrect username or password")
+
+def admin_logout():
+    st.session_state.admin_logged_in = False
+    st.experimental_rerun()
+
+# ==========================
+# --- Page Routing ---
+# ==========================
+page = "Shop"
+if show_admin_login:
+    page = "Admin"
+
+# ==========================
+# --- SHOP PAGE ---
 # ==========================
 if page == "Shop":
     st.markdown("<h1 style='text-align:center;'>Retro Jersey Shop</h1>", unsafe_allow_html=True)
     st.markdown("<p style='text-align:center;'>High-quality retro jerseys delivered to your door!</p>", unsafe_allow_html=True)
     st.markdown("---")
 
-    # Responsive grid
+    # Responsive Grid Layout
     num_columns = 3
     cols = st.columns(num_columns)
     for idx, row in products_df.iterrows():
         col = cols[idx % num_columns]
         with col:
-            st.markdown(f"<div class='block-card'>", unsafe_allow_html=True)
+            st.markdown("<div class='block-card'>", unsafe_allow_html=True)
             st.image(row["image_url"], use_column_width='always')
             st.markdown(f"<h3>{row['name']}</h3>", unsafe_allow_html=True)
             st.markdown(f"<p class='small'>{row['description']}</p>", unsafe_allow_html=True)
@@ -93,7 +136,7 @@ if page == "Shop":
                 st.experimental_rerun()
             st.markdown("</div>", unsafe_allow_html=True)
 
-    # ORDER FORM
+    # --- ORDER FORM ---
     if "selected_product" in st.session_state:
         selected_product_id = st.session_state["selected_product"]
         product = products_df[products_df["id"] == selected_product_id].iloc[0]
@@ -119,7 +162,7 @@ if page == "Shop":
                 else:
                     st.warning("⚠ Fill all fields correctly")
 
-    # Contact info
+    # --- CONTACT INFO ---
     st.markdown("<div class='block-card'>", unsafe_allow_html=True)
     st.markdown("<h3>Contact Us</h3>", unsafe_allow_html=True)
     st.markdown("<p>Email: retroshop@example.com</p>", unsafe_allow_html=True)
@@ -128,36 +171,36 @@ if page == "Shop":
     st.markdown("</div>", unsafe_allow_html=True)
 
 # ==========================
-# ADMIN DASHBOARD
+# --- ADMIN DASHBOARD ---
 # ==========================
-if page == "Admin Dashboard":
-    st.markdown("<h1 style='text-align:center;'>Admin Dashboard</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align:center;'>Manage products and view orders</p>", unsafe_allow_html=True)
-    st.markdown("---")
+if page == "Admin":
+    if not st.session_state.admin_logged_in:
+        admin_login()
+    else:
+        st.markdown("<h1 style='text-align:center;'>Admin Dashboard</h1>", unsafe_allow_html=True)
+        st.button("Logout", on_click=admin_logout)
 
-    # Upload new product
-    st.subheader("Add New Product")
-    with st.form("add_product"):
-        name = st.text_input("Product Name")
-        price = st.number_input("Price", min_value=0)
-        description = st.text_area("Description")
-        image_file = st.file_uploader("Upload Image", type=["png","jpg","jpeg"])
-        submit = st.form_submit_button("Add Product")
+        # --- Add New Product ---
+        st.subheader("Add New Product")
+        with st.form("add_product"):
+            name = st.text_input("Product Name")
+            price = st.number_input("Price", min_value=0)
+            description = st.text_area("Description")
+            image_file = st.file_uploader("Upload Image", type=["png","jpg","jpeg"])
+            submit = st.form_submit_button("Add Product")
 
-        if submit:
-            if name and price and description and image_file:
-                image_bytes = image_file.read()
-                encoded_image = base64.b64encode(image_bytes).decode()
-                image_url = f"data:image/png;base64,{encoded_image}"
-                next_id = (products_df['id'].max() + 1) if not products_df.empty else 1
-                products_sheet.append_row([next_id, name, price, image_url, description])
-                st.success("✅ Product added successfully!")
-            else:
-                st.warning("⚠ Fill all fields and upload an image")
+            if submit:
+                if name and price and description and image_file:
+                    image_bytes = image_file.read()
+                    encoded_image = base64.b64encode(image_bytes).decode()
+                    image_url = f"data:image/png;base64,{encoded_image}"
+                    next_id = (products_df['id'].max() + 1) if not products_df.empty else 1
+                    products_sheet.append_row([next_id, name, price, image_url, description])
+                    st.success("✅ Product added successfully!")
+                else:
+                    st.warning("⚠ Fill all fields and upload an image")
 
-    # View orders
-    st.subheader("Received Orders")
-    orders_df = pd.DataFrame(orders_sheet.get_all_records())  # reload latest
-    st.dataframe(orders_df)
-
-
+        # --- View Orders ---
+        st.subheader("Received Orders")
+        orders_df = pd.DataFrame(orders_sheet.get_all_records())
+        st.dataframe(orders_df)
