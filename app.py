@@ -76,7 +76,7 @@ products_df = pd.DataFrame(products_sheet.get_all_records())
 # --- Admin Login Setup ---
 # ==========================
 # Use environment variables for security on Render
-ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "retro_admin")
+ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "obedadmin")
 ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "RetroJersey2026!")
 
 if "admin_logged_in" not in st.session_state:
@@ -204,3 +204,4 @@ if page == "Admin":
         st.subheader("Received Orders")
         orders_df = pd.DataFrame(orders_sheet.get_all_records())
         st.dataframe(orders_df)
+
