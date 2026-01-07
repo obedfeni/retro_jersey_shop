@@ -1,79 +1,52 @@
 body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: #f5faff;
-  color: #0D47A1;
-  margin: 0;
-  padding: 0;
+    font-family: 'Arial', sans-serif;
+    background-color: #ffffff;
+    color: #1a1a1a;
+    margin: 0;
+    padding: 0;
 }
 
-.header {
-  text-align: center;
-  padding: 30px 0;
-  font-size: 32px;
-  font-weight: bold;
-  color: #0D47A1;
+h1, h2, h3 {
+    color: #0d47a1;
+}
+
+.stButton>button {
+    background-color: #0d47a1;
+    color: white;
+    border-radius: 5px;
+    padding: 8px 16px;
+    border: none;
+    cursor: pointer;
+}
+
+.stButton>button:hover {
+    background-color: #1565c0;
 }
 
 .product-card {
-  background: #ffffff;
-  border-radius: 12px;
-  box-shadow: 0 6px 12px rgba(0,0,0,0.1);
-  padding: 20px;
-  margin: 10px;
-  text-align: center;
-  transition: transform 0.2s;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 16px;
+    margin: 8px;
+    box-shadow: 2px 2px 8px #e0e0e0;
+    text-align: center;
 }
 
-.product-card:hover {
-  transform: scale(1.03);
+.contact-info {
+    background-color: #e3f2fd;
+    padding: 16px;
+    border-radius: 8px;
+    margin-top: 20px;
 }
 
-.product-card img {
-  max-width: 100%;
-  border-radius: 8px;
-  height: 200px;
-  object-fit: cover;
+@media (max-width: 1024px) {
+    .product-card {
+        margin: 8px auto;
+    }
 }
 
-.product-card h3 {
-  font-size: 18px;
-  margin: 10px 0 5px 0;
-}
-
-.product-card .price {
-  color: #0D47A1;
-  font-weight: bold;
-  font-size: 16px;
-}
-
-.product-card button {
-  background-color: #0D47A1;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 8px;
-  cursor: pointer;
-  margin-top: 10px;
-  width: 100%;
-}
-
-.product-card button:hover {
-  background-color: #093974;
-}
-
-/* Responsive columns */
 @media (max-width: 768px) {
-  .stColumns > div {
-      flex: 0 0 100% !important;
-      max-width: 100% !important;
-  }
-}
-
-.carousel img.thumbnail {
-  width: 50px;
-  height: 50px;
-  object-fit: cover;
-  margin: 3px;
-  border-radius: 4px;
-  border: 1px solid #ccc;
+    .stApp > .css-1l02zno {
+        flex-direction: column !important;
+    }
 }
