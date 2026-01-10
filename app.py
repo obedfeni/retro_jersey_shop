@@ -1,206 +1,180 @@
-# ==========================
-# Retro Jersey Shop - Final App
-# ==========================
+# ==============================
+# Retro Jersey Shop – Final Production App
+# Hosting: Render (NO Streamlit Cloud UI)
+# Backend: Google Sheets
+# ==============================
 
 import streamlit as st
-import pandas as pd
 import gspread
-from oauth2client.service_account import ServiceAccountCredentials
+import pandas as pd
+import os, json, base64
 from datetime import datetime
-import base64
-import json
-import os
+from oauth2client.service_account import ServiceAccountCredentials
 
-# ==========================
-# --- Page Config ---
-# ==========================
-st.set_page_config(page_title="Retro Jersey Shop", layout="wide")
+# ---------------- PAGE CONFIG ----------------
+st.set_page_config(
+    page_title="Retro Jersey Shop",
+    layout="wide",
+    initial_sidebar_state="collapsed"
+)
 
-# ==========================
-# --- Hide Streamlit UI ---
-# ==========================
-_hide_style = """
+# ---------------- HIDE STREAMLIT UI ----------------
+st.markdown("""
 <style>
 #MainMenu {visibility: hidden;}
 footer {visibility: hidden;}
 header {visibility: hidden;}
+.stDeployButton {display:none;}
 </style>
-"""
-st.markdown(_hide_style, unsafe_allow_html=True)
+""", unsafe_allow_html=True)
 
-# ==========================
-# --- Custom Blue & White Theme ---
-# ==========================
-_custom_style = """
+# ---------------- THEME ----------------
+st.markdown("""
 <style>
 html, body, .stApp { background: #f0f6ff; color: #0d1b2a; }
-h1, h2, h3, h4, h5 { color: #1e3a8a; }
+h1,h2,h3,h4 { color:#1e3a8a }
 .stButton>button {
-  background: #2563eb; color: #fff; border: none; border-radius: 12px;
-  padding: .6em 1.1em; font-weight: 600;
+    background:#2563eb; color:white; border-radius:12px;
+    padding:10px 16px; font-weight:600; border:none
 }
-.stButton>button:hover { background: #1e40af; }
-.stTextInput>div>div>input {
-  border: 1px solid #2563eb; border-radius: 10px; padding: .55em .7em;
+.stButton>button:hover { background:#1e40af }
+.card {
+    background:white; padding:16px; border-radius:16px;
+    box-shadow:0 8px 20px rgba(0,0,0,.08); margin-bottom:20px
 }
-.block-card {
-  background: #ffffff; border-radius: 14px; padding: 16px 18px;
-  box-shadow: 0 6px 18px rgba(0,0,0,.06); margin: 10px 0;
-}
-.small { color:#334155; font-size:.92rem; }
+.small { font-size:0.9rem; color:#334155 }
 </style>
-"""
-st.markdown(_custom_style, unsafe_allow_html=True)
+""", unsafe_allow_html=True)
 
-# ==========================
-# --- Google Sheets Authentication ---
-# ==========================
+# ---------------- GOOGLE SHEETS AUTH ----------------
 scope = [
     "https://www.googleapis.com/auth/spreadsheets",
     "https://www.googleapis.com/auth/drive"
 ]
 
-# Load service_account.json (uploaded as secret file on Render)
-with open("service_account.json") as f:
-    creds_data = json.load(f)
+raw_creds = os.environ.get("GCP_SERVICE_ACCOUNT")
+if not raw_creds:
+    st.error("Server configuration error")
+    st.stop()
 
-creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_data, scope)
+creds_dict = json.loads(raw_creds)
+creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
 client = gspread.authorize(creds)
 
-# Open Sheets
-products_sheet = client.open("retro_jersey_shop").worksheet("products")
-orders_sheet = client.open("retro_jersey_shop").worksheet("orders")
+# ---------------- LOAD SHEETS ----------------
+SHEET_NAME = "retro_jersey_shop"
+products_sheet = client.open(SHEET_NAME).worksheet("products")
+orders_sheet = client.open(SHEET_NAME).worksheet("orders")
+
 products_df = pd.DataFrame(products_sheet.get_all_records())
 
-# ==========================
-# --- Admin Login Setup ---
-# ==========================
-# Use environment variables for security on Render
-ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "retro_admin")
-ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "RetroJersey2026!")
+# ---------------- ADMIN AUTH ----------------
+ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME", "admin")
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "change_me")
 
-if "admin_logged_in" not in st.session_state:
-    st.session_state.admin_logged_in = False
+query = st.query_params
+is_admin = query.get("admin") == "true"
 
-# Admin login unique link
-url_params = st.query_params
-show_admin_login = url_params.get("admin_login", ["false"])[0] == "true"
+if "admin_logged" not in st.session_state:
+    st.session_state.admin_logged = False
 
-# --- Login / Logout Functions ---
-def admin_login():
-    st.markdown("<h2>Admin Login</h2>", unsafe_allow_html=True)
-    username = st.text_input("Username")
-    password = st.text_input("Password", type="password")
-    if st.button("Login"):
-        if username == ADMIN_USERNAME and password == ADMIN_PASSWORD:
-            st.session_state.admin_logged_in = True
-            st.success("✅ Login successful!")
-            st.experimental_rerun()
-        else:
-            st.error("❌ Incorrect username or password")
+# ==============================
+# ADMIN LOGIN PAGE
+# ==============================
+if is_admin and not st.session_state.admin_logged:
+    st.markdown("## 🔐 Admin Login")
+    with st.form("login"):
+        u = st.text_input("Username")
+        p = st.text_input("Password", type="password")
+        login = st.form_submit_button("Login")
 
-def admin_logout():
-    st.session_state.admin_logged_in = False
-    st.experimental_rerun()
+        if login:
+            if u == ADMIN_USERNAME and p == ADMIN_PASSWORD:
+                st.session_state.admin_logged = True
+                st.rerun()
+            else:
+                st.error("Invalid credentials")
 
-# ==========================
-# --- Page Routing ---
-# ==========================
-page = "Shop"
-if show_admin_login:
-    page = "Admin"
+# ==============================
+# ADMIN DASHBOARD
+# ==============================
+elif is_admin and st.session_state.admin_logged:
+    st.markdown("# 📊 Admin Dashboard")
 
-# ==========================
-# --- SHOP PAGE ---
-# ==========================
-if page == "Shop":
-    st.markdown("<h1 style='text-align:center;'>Retro Jersey Shop</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align:center;'>High-quality retro jerseys delivered to your door!</p>", unsafe_allow_html=True)
+    # ADD PRODUCT
+    st.markdown("## ➕ Add Product")
+    with st.form("add_product"):
+        name = st.text_input("Product name")
+        price = st.number_input("Price", min_value=0)
+        desc = st.text_area("Description")
+        img = st.file_uploader("Image", type=["png","jpg","jpeg"])
+        add = st.form_submit_button("Add")
+
+        if add and name and price and desc and img:
+            img_b64 = base64.b64encode(img.read()).decode()
+            img_url = f"data:image/png;base64,{img_b64}"
+            new_id = int(products_df['id'].max()) + 1 if not products_df.empty else 1
+            products_sheet.append_row([
+                new_id, name, price, img_url, desc
+            ])
+            st.success("Product added")
+            st.rerun()
+
+    # VIEW ORDERS
+    st.markdown("## 📦 Orders")
+    orders_df = pd.DataFrame(orders_sheet.get_all_records())
+    st.dataframe(orders_df, use_container_width=True)
+
+# ==============================
+# PUBLIC SHOP PAGE
+# ==============================
+else:
+    st.markdown("# Retro Jersey Shop")
+    st.markdown("### Premium retro jerseys delivered to your door")
     st.markdown("---")
 
-    # Responsive Grid Layout
-    num_columns = 3
-    cols = st.columns(num_columns)
-    for idx, row in products_df.iterrows():
-        col = cols[idx % num_columns]
-        with col:
-            st.markdown("<div class='block-card'>", unsafe_allow_html=True)
-            st.image(row["image_url"], use_column_width='always')
-            st.markdown(f"<h3>{row['name']}</h3>", unsafe_allow_html=True)
+    if products_df.empty:
+        st.info("No products yet")
+        st.stop()
+
+    cols = st.columns(3)
+    for i, row in products_df.iterrows():
+        with cols[i % 3]:
+            st.markdown("<div class='card'>", unsafe_allow_html=True)
+            st.image(row['image_url'], use_column_width=True)
+            st.markdown(f"### {row['name']}")
             st.markdown(f"<p class='small'>{row['description']}</p>", unsafe_allow_html=True)
-            st.markdown(f"<p><strong>Price: ${row['price']}</strong></p>", unsafe_allow_html=True)
-            
-            order_button = st.button(f"Order {row['name']}", key=f"orderbtn_{row['id']}")
-            if order_button:
-                st.session_state["selected_product"] = row["id"]
-                st.experimental_rerun()
+            st.markdown(f"**Price:** GHS {row['price']}")
+
+            if st.button("Order", key=f"order_{row['id']}"):
+                st.session_state.selected = row
+
             st.markdown("</div>", unsafe_allow_html=True)
 
-    # --- ORDER FORM ---
-    if "selected_product" in st.session_state:
-        selected_product_id = st.session_state["selected_product"]
-        product = products_df[products_df["id"] == selected_product_id].iloc[0]
+    # ORDER FORM
+    if "selected" in st.session_state:
+        p = st.session_state.selected
+        st.markdown("---")
+        st.markdown(f"## Order: {p['name']}")
 
-        st.markdown("<hr>", unsafe_allow_html=True)
-        st.markdown(f"<h2>Order {product['name']}</h2>", unsafe_allow_html=True)
-        with st.form("order_form"):
+        with st.form("order"):
             name = st.text_input("Your Name")
-            phone = st.text_input("Phone/WhatsApp")
+            phone = st.text_input("Phone / WhatsApp")
             location = st.text_input("Delivery Location")
-            qty = st.number_input("Quantity", min_value=1, step=1)
+            qty = st.number_input("Quantity", min_value=1)
             amount = st.number_input("Amount Paid", min_value=0)
-            submit = st.form_submit_button("Place Order")
+            send = st.form_submit_button("Submit Order")
 
-            if submit:
-                if name and phone and location and qty > 0 and amount > 0:
-                    orders_sheet.append_row([
-                        name, phone, location, product["id"], qty, amount, datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                    ])
-                    st.success("✅ Order submitted successfully!")
-                    st.balloons()
-                    del st.session_state["selected_product"]
-                else:
-                    st.warning("⚠ Fill all fields correctly")
+            if send and name and phone and location:
+                orders_sheet.append_row([
+                    name, phone, location, p['id'], qty, amount,
+                    datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                ])
+                st.success("Order received 🎉")
+                del st.session_state.selected
 
-    # --- CONTACT INFO ---
-    st.markdown("<div class='block-card'>", unsafe_allow_html=True)
-    st.markdown("<h3>Contact Us</h3>", unsafe_allow_html=True)
-    st.markdown("<p>Email: retroshop@example.com</p>", unsafe_allow_html=True)
-    st.markdown("<p>Phone/WhatsApp: +233 123 456 789</p>", unsafe_allow_html=True)
-    st.markdown("<p>Instagram: @retroshop</p>", unsafe_allow_html=True)
-    st.markdown("</div>", unsafe_allow_html=True)
-
-# ==========================
-# --- ADMIN DASHBOARD ---
-# ==========================
-if page == "Admin":
-    if not st.session_state.admin_logged_in:
-        admin_login()
-    else:
-        st.markdown("<h1 style='text-align:center;'>Admin Dashboard</h1>", unsafe_allow_html=True)
-        st.button("Logout", on_click=admin_logout)
-
-        # --- Add New Product ---
-        st.subheader("Add New Product")
-        with st.form("add_product"):
-            name = st.text_input("Product Name")
-            price = st.number_input("Price", min_value=0)
-            description = st.text_area("Description")
-            image_file = st.file_uploader("Upload Image", type=["png","jpg","jpeg"])
-            submit = st.form_submit_button("Add Product")
-
-            if submit:
-                if name and price and description and image_file:
-                    image_bytes = image_file.read()
-                    encoded_image = base64.b64encode(image_bytes).decode()
-                    image_url = f"data:image/png;base64,{encoded_image}"
-                    next_id = (products_df['id'].max() + 1) if not products_df.empty else 1
-                    products_sheet.append_row([next_id, name, price, image_url, description])
-                    st.success("✅ Product added successfully!")
-                else:
-                    st.warning("⚠ Fill all fields and upload an image")
-
-        # --- View Orders ---
-        st.subheader("Received Orders")
-        orders_df = pd.DataFrame(orders_sheet.get_all_records())
-        st.dataframe(orders_df)
+    # CONTACT
+    st.markdown("---")
+    st.markdown("0541468102 📞 Contact")
+    st.markdown("WhatsApp: +233541468102 ")
+    st.markdown("Instagram: @retroshop")
