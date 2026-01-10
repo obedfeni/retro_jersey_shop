@@ -117,6 +117,8 @@ elif is_admin and st.session_state.admin_logged:
             products_sheet.append_row([
                 new_id, name, price, img_url, desc
             ])
+            
+            products_df = pd.DataFrame(products_sheet.get_all_records())
             st.success("Product added")
             st.rerun()
 
@@ -178,3 +180,4 @@ else:
     st.markdown("0541468102 📞 Contact")
     st.markdown("WhatsApp: +233541468102 ")
     st.markdown("Instagram: @retroshop")
+
