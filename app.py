@@ -102,7 +102,7 @@ elif is_admin and st.session_state.admin_logged:
     st.markdown("# 📊 Admin Dashboard")
 
     # ADD PRODUCT
-    st.markdown("## ➕ Add Product")
+    st.markdown("## Add Product")
     with st.form("add_product"):
         name = st.text_input("Product name")
         price = st.number_input("Price", min_value=0)
@@ -123,7 +123,7 @@ elif is_admin and st.session_state.admin_logged:
             st.rerun()
 
     # VIEW ORDERS
-    st.markdown("## 📦 Orders")
+    st.markdown("## Orders")
     orders_df = pd.DataFrame(orders_sheet.get_all_records())
     st.dataframe(orders_df, use_container_width=True)
 
@@ -143,7 +143,7 @@ else:
     for i, row in products_df.iterrows():
         with cols[i % 3]:
             st.markdown("<div class='card'>", unsafe_allow_html=True)
-            st.image(row['image_url'], use_column_width=True)
+            st.image(row['image_url'], width=280)
             st.markdown(f"### {row['name']}")
             st.markdown(f"<p class='small'>{row['description']}</p>", unsafe_allow_html=True)
             st.markdown(f"**Price:** GHS {row['price']}")
@@ -180,4 +180,5 @@ else:
     st.markdown("0541468102 📞 Contact")
     st.markdown("WhatsApp: +233541468102 ")
     st.markdown("Instagram: @retroshop")
+
 
