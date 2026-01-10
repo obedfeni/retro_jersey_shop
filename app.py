@@ -120,7 +120,7 @@ elif is_admin and st.session_state.admin_logged:
           accept_multiple_files=True)
         add = st.form_submit_button("Add")
 
-       if add and name and price and desc and images:
+    if add and name and price and desc and images:
     encoded_images = []
     for img in images[:3]:
         encoded = base64.b64encode(img.read()).decode()
@@ -144,9 +144,9 @@ elif is_admin and st.session_state.admin_logged:
     st.success("Product added with multiple images")
     st.rerun()
 
-            products_df = pd.DataFrame(products_sheet.get_all_records())
-            st.success("Product added")
-            st.rerun()
+    products_df = pd.DataFrame(products_sheet.get_all_records())
+    st.success("Product added")
+    st.rerun()
      st.markdown("## 🗑️ Manage Products")
        if products_df.empty:
         st.info("No products available")
@@ -232,6 +232,7 @@ else:
     st.markdown("0541468102 📞 Contact")
     st.markdown("WhatsApp: +233541468102 ")
     st.markdown("Instagram: @retroshop")
+
 
 
 
