@@ -66,7 +66,14 @@ SHEET_NAME = "retro_jersey_shop"
 products_sheet = client.open(SHEET_NAME).worksheet("products")
 orders_sheet = client.open(SHEET_NAME).worksheet("orders")
 
-products_df = pd.DataFrame(products_sheet.get_all_records())
+def load_products_with_rows():
+    records = products_sheet.get_all_records()
+    rows = []
+    for i, r in enumerate(records, start=2):  # row 1 = headers
+        r["_row"] = i
+        rows.append(r)
+    return pd.DataFrame(rows)
+products_df = load_products_with_rows()
 
 # ---------------- ADMIN AUTH ----------------
 ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME", "admin")
@@ -107,20 +114,65 @@ elif is_admin and st.session_state.admin_logged:
         name = st.text_input("Product name")
         price = st.number_input("Price", min_value=0)
         desc = st.text_area("Description")
-        img = st.file_uploader("Image", type=["png","jpg","jpeg"])
+        images = st.file_uploader(
+         "Upload up to 3 images",
+         type=["png", "jpg", "jpeg"],
+          accept_multiple_files=True)
         add = st.form_submit_button("Add")
 
-        if add and name and price and desc and img:
-            img_b64 = base64.b64encode(img.read()).decode()
-            img_url = f"data:image/png;base64,{img_b64}"
-            new_id = int(products_df['id'].max()) + 1 if not products_df.empty else 1
-            products_sheet.append_row([
-                new_id, name, price, img_url, desc
-            ])
-            
+       if add and name and price and desc and images:
+    encoded_images = []
+    for img in images[:3]:
+        encoded = base64.b64encode(img.read()).decode()
+        encoded_images.append(f"data:image/png;base64,{encoded}")
+
+    while len(encoded_images) < 3:
+        encoded_images.append("")
+
+    new_id = int(products_df['id'].max()) + 1 if not products_df.empty else 1
+
+    products_sheet.append_row([
+        new_id,
+        name,
+        price,
+        encoded_images[0],
+        encoded_images[1],
+        encoded_images[2],
+        desc
+    ])
+
+    st.success("Product added with multiple images")
+    st.rerun()
+
             products_df = pd.DataFrame(products_sheet.get_all_records())
             st.success("Product added")
             st.rerun()
+     st.markdown("## 🗑️ Manage Products")
+       if products_df.empty:
+        st.info("No products available")
+        else:
+          for _, row in products_df.iterrows():
+            st.markdown("<div class='card'>", unsafe_allow_html=True)
+
+            st.image(row["image_url"], width=200)
+            st.markdown(f"### {row['name']}")
+            st.markdown(f"Price: GHS {row['price']}")
+
+            confirm = st.checkbox(
+                f"Confirm delete {row['name']}",
+                key=f"confirm_{row['id']}"
+            )
+
+            if st.button("Delete Product", key=f"delete_{row['id']}"):
+                if confirm:
+                    products_sheet.delete_rows(row["_row"])
+                    st.success(f"🗑️ {row['name']} deleted")
+                    st.rerun()
+                else:
+                    st.warning("Please confirm deletion")
+
+            st.markdown("</div>", unsafe_allow_html=True)
+       
 
     # VIEW ORDERS
     st.markdown("## Orders")
@@ -180,5 +232,6 @@ else:
     st.markdown("0541468102 📞 Contact")
     st.markdown("WhatsApp: +233541468102 ")
     st.markdown("Instagram: @retroshop")
+
 
 
