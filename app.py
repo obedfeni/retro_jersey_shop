@@ -65,16 +65,18 @@ client = gspread.authorize(creds)
 SHEET_NAME = "retro_jersey_shop"
 products_sheet = client.open(SHEET_NAME).worksheet("products")
 orders_sheet = client.open(SHEET_NAME).worksheet("orders")
-
+records = products_sheet.get_all_records(
+    expected_headers=["id","name","price","image_1","image_2","image_3","description","stock"]
+)
 def load_products_with_rows():
-    records = products_sheet.get_all_records()
+    records = products_sheet.get_all_records(
+        expected_headers=["id","name","price","image_1","image_2","image_3","description","stock"]
+    )
     rows = []
     for i, r in enumerate(records, start=2):
         r["_row"] = i
         rows.append(r)
     return pd.DataFrame(rows)
-
-products_df = load_products_with_rows()
 
 # ---------------- ADMIN AUTH ----------------
 ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME", "admin")
@@ -247,4 +249,5 @@ else:
     st.markdown("📞 0541468102")
     st.markdown("WhatsApp: +233541468102")
     st.markdown("Instagram: @retroshop")
+
 
