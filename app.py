@@ -85,7 +85,9 @@ ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME", "admin")
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "change_me")
 
 query = st.query_params
-is_admin = query.get("admin") == ["true"]
+is_admin = False
+if "admin" in query and query["admin"] and query["admin"][0].lower() == "true":
+    is_admin = True
 
 if "admin_logged" not in st.session_state:
     st.session_state.admin_logged = False
@@ -239,3 +241,4 @@ else:
     st.markdown("0541468102 📞 Contact")
     st.markdown("WhatsApp: +233541468102 ")
     st.markdown("Instagram: @retroshop")
+
