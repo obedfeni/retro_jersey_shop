@@ -87,7 +87,7 @@ if "admin_logged" not in st.session_state:
     st.session_state.admin_logged = False
 
 # ==============================
-# ADMIN LOGIN PAGE
+# ADMIN LOGIN
 # ==============================
 if is_admin and not st.session_state.admin_logged:
     st.markdown("## 🔐 Admin Login")
@@ -127,6 +127,7 @@ elif is_admin and st.session_state.admin_logged:
 
         if add and name and price and desc and images:
             encoded_images = []
+
             for img in images[:3]:
                 encoded = base64.b64encode(img.read()).decode()
                 encoded_images.append(f"data:image/png;base64,{encoded}")
@@ -153,75 +154,48 @@ elif is_admin and st.session_state.admin_logged:
     # -------- MANAGE PRODUCTS --------
     st.markdown("## 🗑️ Manage Products")
 
-    if products_df.empty:
-        st.info("No products available")
-    else:
-        for _, row in products_df.iterrows():
-            st.markdown("<div class='card'>", unsafe_allow_html=True)
+    products_df = load_products_with_rows()
 
-            st.image(row.get("image_1"), width=200)
-            st.markdown(f"### {row['name']}")
-            st.markdown(f"Price: GHS {row['price']}")
-            st.markdown(f"Stock: {row.get('stock', 0)}")
+    for _, row in products_df.iterrows():
+        st.markdown("<div class='card'>", unsafe_allow_html=True)
 
-            confirm = st.checkbox(
-                f"Confirm delete {row['name']}",
-                key=f"confirm_{row['id']}"
-            )
+        st.image(row["image_1"], width=200)
+        st.markdown(f"### {row['name']}")
+        st.markdown(f"Price: GHS {row['price']}")
+        st.markdown(f"Stock: {row['stock']}")
 
-            if st.button("Delete Product", key=f"delete_{row['id']}"):
-                if confirm:
-                    products_sheet.delete_rows(row["_row"])
-                    st.success(f"🗑️ {row['name']} deleted")
-                    st.rerun()
-                else:
-                    st.warning("Please confirm deletion")
+        confirm = st.checkbox(
+            f"Confirm delete {row['name']}",
+            key=f"confirm_{row['id']}"
+        )
 
-            st.markdown("</div>", unsafe_allow_html=True)
+        if st.button("Delete Product", key=f"delete_{row['id']}"):
+            if confirm:
+                products_sheet.delete_rows(row["_row"])
+                st.success("Product deleted")
+                st.rerun()
+
+        st.markdown("</div>", unsafe_allow_html=True)
 
     # -------- ORDERS --------
     st.markdown("## 📦 Orders")
-
     orders_df = pd.DataFrame(orders_sheet.get_all_records())
     st.dataframe(orders_df, use_container_width=True)
 
-    if not orders_df.empty:
-        st.markdown("### 🚚 Update Order Status")
-
-        order_index = st.selectbox(
-            "Select Order",
-            orders_df.index,
-            format_func=lambda i: f"{orders_df.loc[i,'name']} - {orders_df.loc[i,'status']}"
-        )
-
-        new_status = st.selectbox(
-            "New Status",
-            ["Pending", "Paid", "Delivered"]
-        )
-
-        if st.button("Update Status"):
-            orders_sheet.update_cell(order_index + 2, 7, new_status)
-            st.success("Order status updated")
-            st.rerun()
-
 # ==============================
-# PUBLIC SHOP PAGE
+# PUBLIC SHOP
 # ==============================
 else:
     st.markdown("# Retro Jersey Shop")
     st.markdown("### Premium retro jerseys delivered to your door")
     st.markdown("---")
 
-    search = st.text_input("🔍 Search jerseys")
+    search = st.text_input("🔍 Search")
 
     if search:
         products_df = products_df[
             products_df["name"].str.contains(search, case=False, na=False)
         ]
-
-    if products_df.empty:
-        st.info("No products available")
-        st.stop()
 
     cols = st.columns(3)
 
@@ -229,8 +203,7 @@ else:
         with cols[i % 3]:
             st.markdown("<div class='card'>", unsafe_allow_html=True)
 
-            images = [row.get("image_1"), row.get("image_2"), row.get("image_3")]
-            for img in images:
+            for img in [row["image_1"], row["image_2"], row["image_3"]]:
                 if img:
                     st.image(img, width=280)
 
@@ -238,15 +211,14 @@ else:
             st.markdown(f"<p class='small'>{row['description']}</p>", unsafe_allow_html=True)
             st.markdown(f"**Price:** GHS {row['price']}")
 
-            if row.get("stock", 0) <= 0:
-                st.markdown("### ❌ Out of Stock")
+            if row["stock"] <= 0:
+                st.error("Out of Stock")
             else:
                 if st.button("Order", key=f"order_{row['id']}"):
                     st.session_state.selected = row
 
             st.markdown("</div>", unsafe_allow_html=True)
 
-    # -------- ORDER FORM --------
     if "selected" in st.session_state:
         p = st.session_state.selected
         st.markdown("---")
@@ -260,22 +232,19 @@ else:
             amount = st.number_input("Amount Paid", min_value=0)
             send = st.form_submit_button("Submit Order")
 
-            if send and name and phone and location:
+            if send:
                 orders_sheet.append_row([
-                    name,
-                    phone,
-                    location,
-                    p["id"],
-                    qty,
-                    amount,
-                    "Pending",
+                    name, phone, location, p["id"],
+                    qty, amount, "Pending",
                     datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 ])
-                st.success("🎉 Order received")
+                st.success("🎉 Order placed")
                 del st.session_state.selected
+
 
     # -------- CONTACT --------
     st.markdown("---")
     st.markdown("📞 0541468102")
     st.markdown("WhatsApp: +233541468102")
     st.markdown("Instagram: @retroshop")
+
