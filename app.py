@@ -31,8 +31,8 @@ header {visibility: hidden;}
 # ---------------- THEME ----------------
 st.markdown("""
 <style>
-html, body, .stApp { background: #f0f6ff; color: #0d1b2a; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;}
-h1,h2,h3,h4 { color:#1e3a8a; font-weight:700;}
+html, body, .stApp { background: #f0f6ff; color: #0d1b2a; }
+h1,h2,h3,h4 { color:#1e3a8a }
 .stButton>button {
     background:#2563eb; color:white; border-radius:12px;
     padding:10px 16px; font-weight:600; border:none
@@ -43,7 +43,6 @@ h1,h2,h3,h4 { color:#1e3a8a; font-weight:700;}
     box-shadow:0 8px 20px rgba(0,0,0,.08); margin-bottom:20px
 }
 .small { font-size:0.9rem; color:#334155 }
-.out-of-stock { color:red; font-weight:bold; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -55,7 +54,7 @@ scope = [
 
 raw_creds = os.environ.get("GCP_SERVICE_ACCOUNT")
 if not raw_creds:
-    st.error("Server configuration error: missing GCP_SERVICE_ACCOUNT")
+    st.error("Server configuration error")
     st.stop()
 
 creds_dict = json.loads(raw_creds)
@@ -67,11 +66,10 @@ SHEET_NAME = "retro_jersey_shop"
 products_sheet = client.open(SHEET_NAME).worksheet("products")
 orders_sheet = client.open(SHEET_NAME).worksheet("orders")
 
-# Force expected headers to avoid duplicates / blanks
 def load_products_with_rows():
-    records = products_sheet.get_all_records(
-        expected_headers=["id","name","price","image_1","image_2","image_3","description","stock"]
-    )
+    records = products_sheet.get_all_records(expected_headers=[
+        "id", "name", "price", "image1", "image2", "image3", "description"
+    ])
     rows = []
     for i, r in enumerate(records, start=2):
         r["_row"] = i
@@ -105,7 +103,7 @@ if is_admin and not st.session_state.admin_logged:
         if login:
             if u == ADMIN_USERNAME and p == ADMIN_PASSWORD:
                 st.session_state.admin_logged = True
-                st.experimental_rerun()
+                st.rerun()
             else:
                 st.error("Invalid credentials")
 
@@ -115,13 +113,12 @@ if is_admin and not st.session_state.admin_logged:
 elif is_admin and st.session_state.admin_logged:
     st.markdown("# 📊 Admin Dashboard")
 
-    # ---------------- Add Product ----------------
+    # ADD PRODUCT
     st.markdown("## Add Product")
     with st.form("add_product"):
         name = st.text_input("Product name")
         price = st.number_input("Price", min_value=0)
         desc = st.text_area("Description")
-        stock = st.number_input("Stock quantity", min_value=0)
         images = st.file_uploader(
             "Upload up to 3 images",
             type=["png", "jpg", "jpeg"],
@@ -134,48 +131,52 @@ elif is_admin and st.session_state.admin_logged:
             for img in images[:3]:
                 encoded = base64.b64encode(img.read()).decode()
                 encoded_images.append(f"data:image/png;base64,{encoded}")
+
             while len(encoded_images) < 3:
                 encoded_images.append("")
 
-            new_id = int(products_df['id'].max()) + 1 if not products_df.empty else 1
+            new_id = int(products_df["id"].max()) + 1 if not products_df.empty else 1
 
             products_sheet.append_row([
-                new_id, name, price,
-                encoded_images[0], encoded_images[1], encoded_images[2],
-                desc, stock
+                new_id,
+                name,
+                price,
+                encoded_images[0],
+                encoded_images[1],
+                encoded_images[2],
+                desc
             ])
-            st.success("✅ Product added with multiple images")
-            products_df = load_products_with_rows()
-            st.experimental_rerun()
 
-    # ---------------- Manage Products ----------------
+            st.success("Product added successfully")
+            st.rerun()
+
+    # MANAGE PRODUCTS
     st.markdown("## 🗑️ Manage Products")
-    if products_df.empty:
-        st.info("No products available")
-    else:
-        for _, row in products_df.iterrows():
-            st.markdown("<div class='card'>", unsafe_allow_html=True)
-            st.markdown(f"### {row['name']}")
-            st.markdown(f"Price: GHS {row['price']}")
-            st.markdown(f"Stock: {row['stock']}")
-            st.image([row["image_1"], row["image_2"], row["image_3"]], width=150)
+    products_df = load_products_with_rows()
 
-            confirm = st.checkbox(
-                f"Confirm delete {row['name']}",
-                key=f"confirm_{row['id']}"
-            )
+    for _, row in products_df.iterrows():
+        st.markdown("<div class='card'>", unsafe_allow_html=True)
+        if row["image1"]:
+            st.image(row["image1"], width=200)
+        st.markdown(f"### {row['name']}")
+        st.markdown(f"Price: GHS {row['price']}")
 
-            if st.button("Delete Product", key=f"delete_{row['id']}"):
-                if confirm:
-                    products_sheet.delete_rows(row["_row"])
-                    st.success(f"🗑️ {row['name']} deleted")
-                    products_df = load_products_with_rows()
-                    st.experimental_rerun()
-                else:
-                    st.warning("Please confirm deletion")
-            st.markdown("</div>", unsafe_allow_html=True)
+        confirm = st.checkbox(
+            f"Confirm delete {row['name']}",
+            key=f"confirm_{row['id']}"
+        )
 
-    # ---------------- View Orders ----------------
+        if st.button("Delete Product", key=f"delete_{row['id']}"):
+            if confirm:
+                products_sheet.delete_rows(row["_row"])
+                st.success("Product deleted")
+                st.rerun()
+            else:
+                st.warning("Confirm deletion first")
+
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    # VIEW ORDERS
     st.markdown("## Orders")
     orders_df = pd.DataFrame(orders_sheet.get_all_records())
     st.dataframe(orders_df, use_container_width=True)
@@ -192,26 +193,21 @@ else:
         st.info("No products yet")
         st.stop()
 
-    # Search & filter
-    search_query = st.text_input("Search product")
-    filtered_df = products_df[products_df['name'].str.contains(search_query, case=False)]
-
     cols = st.columns(3)
-    for i, row in filtered_df.iterrows():
+    for i, row in products_df.iterrows():
         with cols[i % 3]:
             st.markdown("<div class='card'>", unsafe_allow_html=True)
-            images = [row['image_1'], row['image_2'], row['image_3']]
-            st.image([img for img in images if img], width=280)
+            if row["image1"]:
+                st.image(row["image1"], width=280)
             st.markdown(f"### {row['name']}")
             st.markdown(f"<p class='small'>{row['description']}</p>", unsafe_allow_html=True)
-            price_display = f"GHS {row['price']}" if row['stock'] > 0 else "Out of Stock"
-            st.markdown(f"**Price:** {price_display}")
-            
-            if row['stock'] > 0 and st.button("Order", key=f"order_{row['id']}"):
+            st.markdown(f"**Price:** GHS {row['price']}")
+
+            if st.button("Order", key=f"order_{row['id']}"):
                 st.session_state.selected = row
+
             st.markdown("</div>", unsafe_allow_html=True)
 
-    # ---------------- Order Form ----------------
     if "selected" in st.session_state:
         p = st.session_state.selected
         st.markdown("---")
@@ -226,19 +222,14 @@ else:
             send = st.form_submit_button("Submit Order")
 
             if send and name and phone and location:
-                new_stock = p['stock'] - qty
-                products_sheet.update_cell(p["_row"], 8, max(new_stock, 0))  # update stock
                 orders_sheet.append_row([
-                    name, phone, location, p['id'], qty, amount,
-                    "Pending",
+                    name, phone, location, p["id"], qty, amount,
                     datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 ])
-                st.success("✅ Order received 🎉")
+                st.success("Order received 🎉")
                 del st.session_state.selected
 
-    # ---------------- CONTACT ----------------
     st.markdown("---")
-    st.markdown("0541468102 📞 Contact")
-    st.markdown("WhatsApp: +233541468102 ")
+    st.markdown("📞 0541468102")
+    st.markdown("WhatsApp: +233541468102")
     st.markdown("Instagram: @retroshop")
-
