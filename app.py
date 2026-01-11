@@ -166,7 +166,7 @@ if st.session_state.admin_logged:
     st.markdown("## 📦 Orders")
     orders_df = pd.DataFrame(
         orders_sheet.get_all_records(expected_headers=[
-            "name","phone","location","product_id",
+            "name","phone","location",
             "qty","amount","timestamp","status"
         ])
     )
@@ -228,3 +228,4 @@ else:
     st.markdown("---")
     st.markdown("📞 0541468102 | WhatsApp available")
     st.markdown("Instagram: @retroshop")
+
