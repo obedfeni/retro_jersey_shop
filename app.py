@@ -228,4 +228,106 @@ else:
     st.markdown("---")
     st.markdown("📞 0541468102 | WhatsApp available")
     st.markdown("Instagram: @retroshop")
+        # ===== FOOTER =====
+    st.markdown("""
+    <style>
+    .footer {
+      background:#0f172a;
+      color:white;
+      padding:64px 16px 32px;
+      margin-top:80px;
+    }
+    .footer-container {
+      max-width:1200px;
+      margin:auto;
+    }
+    .footer-grid {
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+      gap:48px;
+    }
+    .footer h2 {
+      font-size:1.5rem;
+      font-weight:700;
+    }
+    .footer p {
+      color:#94a3b8;
+      line-height:1.7;
+      font-size:0.95rem;
+    }
+    .footer a {
+      color:#94a3b8;
+      text-decoration:none;
+    }
+    .footer a:hover {
+      color:white;
+    }
+    .footer-bottom {
+      border-top:1px solid #1e293b;
+      margin-top:48px;
+      padding-top:24px;
+      text-align:center;
+      font-size:0.8rem;
+      color:#64748b;
+    }
+    .brand {
+      display:flex;
+      align-items:center;
+      gap:12px;
+      margin-bottom:16px;
+    }
+    .logo {
+      width:40px;
+      height:40px;
+      background:#2563eb;
+      border-radius:8px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:800;
+      font-size:20px;
+    }
+    </style>
+
+    <div class="footer">
+      <div class="footer-container">
+
+        <div class="footer-grid">
+
+          <div>
+            <div class="brand">
+              <div class="logo">R</div>
+              <h2>Retro Jersey</h2>
+            </div>
+            <p>
+              Curating the most iconic moments in football history through premium,
+              authentic retro jersey reproductions. Based in Accra, shipping nationwide.
+            </p>
+          </div>
+
+          <div>
+            <h4>Support</h4>
+            <p><a href="#">Order Tracking</a></p>
+            <p><a href="#">Shipping Policy</a></p>
+            <p><a href="#">Size Guide</a></p>
+            <p><a href="#">Contact Us</a></p>
+          </div>
+
+          <div>
+            <h4>Contact</h4>
+            <p>📞 054 146 8102</p>
+            <p>📍 East Legon, Accra</p>
+          </div>
+
+        </div>
+
+        <div class="footer-bottom">
+          © 2026 Retro Jersey Shop. All rights reserved. Relive the heritage.
+        </div>
+
+      </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+
 
