@@ -18,157 +18,80 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# ---------------- GLOBAL CSS ----------------
-st.markdown("""
-<style>
-#MainMenu, footer, header {visibility:hidden;}
-.stDeployButton {display:none;}
+# ---------------- ADMIN PATH DETECTION ----------------
+def is_admin_path():
+    try:
+        ctx = st.runtime.scriptrunner.get_script_run_ctx()
+        return ctx and ctx.request and ctx.request.path == "/admin"
+    except:
+        return False
 
-html, body, .stApp {
-  background:#f8fafc;
-  color:#0f172a;
-  font-family: Inter, system-ui, sans-serif;
-}
+# ---------------- SESSION STATE ----------------
+if "admin_logged" not in st.session_state:
+    st.session_state.admin_logged = False
 
-/* HEADER */
-.shop-header {
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  padding:24px 40px;
-  border-bottom:1px solid #e5e7eb;
-}
-.brand {
-  display:flex;
-  align-items:center;
-  gap:12px;
-}
-.logo {
-  width:40px;
-  height:40px;
-  background:#2563eb;
-  color:white;
-  font-weight:800;
-  border-radius:8px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-.brand h1 {
-  font-size:1.6rem;
-  margin:0;
-}
-.menu-btn {
-  font-size:26px;
-  background:none;
-  border:none;
-  cursor:pointer;
-}
-
-/* CARDS */
-.card {
-  background:white;
-  padding:16px;
-  border-radius:16px;
-  box-shadow:0 8px 20px rgba(0,0,0,.06);
-  margin-bottom:24px;
-}
-.small { color:#64748b; font-size:0.9rem }
-
-/* FOOTER */
-.footer {
-  background:#0f172a;
-  color:white;
-  padding:64px 24px 32px;
-  margin-top:80px;
-}
-.footer-container {
-  max-width:1200px;
-  margin:auto;
-}
-.footer-grid {
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
-  gap:48px;
-}
-.footer h3 {
-  font-size:0.75rem;
-  letter-spacing:0.12em;
-  color:#94a3b8;
-}
-.footer p, .footer a {
-  color:#94a3b8;
-  font-size:0.9rem;
-  line-height:1.6;
-  text-decoration:none;
-}
-.footer a:hover { color:white }
-.footer-bottom {
-  border-top:1px solid #1e293b;
-  margin-top:48px;
-  padding-top:24px;
-  text-align:center;
-  font-size:0.8rem;
-  color:#64748b;
-}
-</style>
-""", unsafe_allow_html=True)
-
-# ---------------- HEADER ----------------
-st.markdown("""
-<div class="shop-header">
-  <div class="brand">
-    <div class="logo">R</div>
-    <h1>Retro Jersey</h1>
-  </div>
-</div>
-""", unsafe_allow_html=True)
-
-# ---------------- ADMIN STATE ----------------
-if "admin_mode" not in st.session_state:
-    st.session_state.admin_mode = False
 if "show_admin_login" not in st.session_state:
     st.session_state.show_admin_login = False
 
-# ---------------- ADMIN MENU (TOP-RIGHT) ----------------
-col1, col2 = st.columns([0.94, 0.06])
-with col2:
-    if st.button("⋮"):
-        st.session_state.show_admin_login = not st.session_state.show_admin_login
+if is_admin_path():
+    st.session_state.show_admin_login = True
 
-# ---------------- ADMIN LOGIN ----------------
-if st.session_state.show_admin_login and not st.session_state.admin_mode:
-    st.markdown("### 🔐 Admin Login")
-    pw = st.text_input("Admin Password", type="password")
-    if st.button("Enter Admin Mode"):
-        if pw == os.environ.get("ADMIN_PASSWORD", "change_me"):
-            st.session_state.admin_mode = True
-            st.session_state.show_admin_login = False
-            st.rerun()
-        else:
-            st.error("Wrong password")
+# ---------------- HIDE STREAMLIT UI ----------------
+st.markdown("""
+<style>
+#MainMenu {visibility: hidden;}
+footer {visibility: hidden;}
+header {visibility: hidden;}
+.stDeployButton {display:none;}
+</style>
+""", unsafe_allow_html=True)
 
-# ---------------- GOOGLE SHEETS ----------------
+# ---------------- GLOBAL THEME ----------------
+st.markdown("""
+<style>
+html, body, .stApp { background:#f0f6ff; color:#0d1b2a; }
+h1,h2,h3,h4 { color:#1e3a8a }
+.stButton>button {
+    background:#2563eb; color:white; border-radius:12px;
+    padding:10px 16px; font-weight:600; border:none
+}
+.stButton>button:hover { background:#1e40af }
+.card {
+    background:white; padding:16px; border-radius:16px;
+    box-shadow:0 8px 20px rgba(0,0,0,.08);
+    margin-bottom:20px
+}
+.small { font-size:0.9rem; color:#334155 }
+</style>
+""", unsafe_allow_html=True)
+
+# ---------------- GOOGLE SHEETS AUTH ----------------
 scope = [
     "https://www.googleapis.com/auth/spreadsheets",
     "https://www.googleapis.com/auth/drive"
 ]
-creds = ServiceAccountCredentials.from_json_keyfile_dict(
-    json.loads(os.environ["GCP_SERVICE_ACCOUNT"]),
-    scope
-)
+
+raw_creds = os.environ.get("GCP_SERVICE_ACCOUNT")
+if not raw_creds:
+    st.error("Server configuration error")
+    st.stop()
+
+creds_dict = json.loads(raw_creds)
+creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
 client = gspread.authorize(creds)
 
-products_sheet = client.open("retro_jersey_shop").worksheet("products")
-orders_sheet = client.open("retro_jersey_shop").worksheet("orders")
+# ---------------- LOAD SHEETS ----------------
+SHEET_NAME = "retro_jersey_shop"
+products_sheet = client.open(SHEET_NAME).worksheet("products")
+orders_sheet = client.open(SHEET_NAME).worksheet("orders")
 
 def load_products():
-    rows = []
     records = products_sheet.get_all_records(expected_headers=[
         "id","name","price","stock",
         "image1","image2","image3",
         "description","status"
     ])
+    rows = []
     for i, r in enumerate(records, start=2):
         r["_row"] = i
         rows.append(r)
@@ -177,101 +100,155 @@ def load_products():
 products_df = load_products()
 
 # ==============================
-# ADMIN DASHBOARD
+# 🔐 ADMIN LOGIN PAGE (/admin)
 # ==============================
-if st.session_state.admin_mode:
+if st.session_state.show_admin_login and not st.session_state.admin_logged:
+    st.markdown("# 🔐 Admin Portal")
+    st.markdown("Authorized access only.")
 
-    st.markdown("## 📊 Admin Dashboard")
+    password = st.text_input("Admin Password", type="password")
 
-    if st.button("🚪 Exit Admin Mode"):
-        st.session_state.admin_mode = False
+    if st.button("Login"):
+        if password == os.environ.get("ADMIN_PASSWORD"):
+            st.session_state.admin_logged = True
+            st.success("Access granted")
+            st.rerun()
+        else:
+            st.error("Invalid password")
+
+    st.stop()
+
+# ==============================
+# 📊 ADMIN DASHBOARD
+# ==============================
+if st.session_state.admin_logged:
+
+    st.markdown("# 📊 Admin Dashboard")
+
+    if st.button("🚪 Logout"):
+        st.session_state.admin_logged = False
         st.rerun()
 
+    # ADD PRODUCT
+    st.markdown("## ➕ Add Product")
     with st.form("add_product"):
         name = st.text_input("Product Name")
         price = st.number_input("Price", min_value=0)
         stock = st.number_input("Stock Quantity", min_value=0)
         desc = st.text_area("Description")
-        images = st.file_uploader("Upload up to 3 images", accept_multiple_files=True)
+        images = st.file_uploader(
+            "Upload up to 3 images",
+            type=["png","jpg","jpeg"],
+            accept_multiple_files=True
+        )
         add = st.form_submit_button("Add Product")
 
         if add and name and images:
-            imgs = []
+            encoded = []
             for img in images[:3]:
-                imgs.append(f"data:image/png;base64,{base64.b64encode(img.read()).decode()}")
-            while len(imgs) < 3:
-                imgs.append("")
+                encoded.append(
+                    f"data:image/png;base64,{base64.b64encode(img.read()).decode()}"
+                )
+            while len(encoded) < 3:
+                encoded.append("")
 
-            status = "In Stock" if stock > 0 else "Out of Stock"
             new_id = int(products_df["id"].max()) + 1 if not products_df.empty else 1
+            status = "In Stock" if stock > 0 else "Out of Stock"
 
             products_sheet.append_row([
                 new_id, name, price, stock,
-                imgs[0], imgs[1], imgs[2],
+                encoded[0], encoded[1], encoded[2],
                 desc, status
             ])
-            st.success("Product added")
+
+            st.success("✅ Product added")
             st.rerun()
 
-    st.markdown("### 🗑️ Manage Products")
+    # MANAGE PRODUCTS
+    st.markdown("## 🗑️ Manage Products")
     products_df = load_products()
     for _, row in products_df.iterrows():
         st.markdown("<div class='card'>", unsafe_allow_html=True)
         st.image(row["image1"], width=180)
-        st.markdown(f"**{row['name']}** — {row['status']}")
-        if st.button(f"Delete {row['name']}", key=f"d{row['id']}"):
+        st.markdown(f"**{row['name']}**")
+        st.markdown(f"Stock: {row['stock']} | Status: {row['status']}")
+
+        if st.button(f"Delete {row['name']}", key=f"del_{row['id']}"):
             products_sheet.delete_rows(row["_row"])
+            st.success("Product deleted")
             st.rerun()
+
         st.markdown("</div>", unsafe_allow_html=True)
 
+    # ORDERS
+    st.markdown("## 📦 Orders")
+    orders_df = pd.DataFrame(
+        orders_sheet.get_all_records(expected_headers=[
+            "name","phone","location","product_id",
+            "qty","amount","timestamp","status"
+        ])
+    )
+    st.dataframe(orders_df, use_container_width=True)
+
+    st.stop()
+
 # ==============================
-# SHOP PAGE
+# 🛍️ PUBLIC SHOP
 # ==============================
-else:
-    st.markdown("## Premium Retro Jerseys")
+st.markdown("# Retro Jersey Shop")
+st.markdown("### Premium retro jerseys delivered to your door")
+st.markdown("---")
 
-    cols = st.columns(3)
-    for i, row in products_df.iterrows():
-        with cols[i % 3]:
-            st.markdown("<div class='card'>", unsafe_allow_html=True)
-            st.image(row["image1"], width=260)
-            st.markdown(f"### {row['name']}")
-            st.markdown(f"<p class='small'>{row['description']}</p>", unsafe_allow_html=True)
-            st.markdown(f"**GHS {row['price']}**")
+if products_df.empty:
+    st.info("No products available")
+    st.stop()
 
-            if row["status"] == "Out of Stock":
-                st.error("Out of Stock")
-            else:
-                if st.button("Order", key=row["id"]):
-                    st.session_state.selected = row
-            st.markdown("</div>", unsafe_allow_html=True)
+cols = st.columns(3)
+for i, row in products_df.iterrows():
+    with cols[i % 3]:
+        st.markdown("<div class='card'>", unsafe_allow_html=True)
+        st.image(row["image1"], width=260)
+        st.markdown(f"### {row['name']}")
+        st.markdown(f"<p class='small'>{row['description']}</p>", unsafe_allow_html=True)
+        st.markdown(f"**Price:** GHS {row['price']}")
 
-# ---------------- FOOTER ----------------
+        if row["status"] == "Out of Stock":
+            st.error("Out of Stock")
+        else:
+            if st.button("Order", key=f"order_{row['id']}"):
+                st.session_state.selected = row
+
+        st.markdown("</div>", unsafe_allow_html=True)
+
+# ORDER FORM
+if "selected" in st.session_state:
+    p = st.session_state.selected
+    st.markdown("---")
+    st.markdown(f"## Order: {p['name']}")
+
+    with st.form("order"):
+        name = st.text_input("Your Name")
+        phone = st.text_input("Phone / WhatsApp")
+        location = st.text_input("Delivery Location")
+        qty = st.number_input("Quantity", min_value=1)
+        amount = st.number_input("Amount Paid", min_value=0)
+        send = st.form_submit_button("Submit Order")
+
+        if send and name and phone and location:
+            orders_sheet.append_row([
+                name, phone, location, p["id"],
+                qty, amount,
+                datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "Pending"
+            ])
+            st.success("Order received 🎉")
+            del st.session_state.selected
+
+# ==============================
+# FOOTER
+# ==============================
 st.markdown("""
-<div class="footer">
-  <div class="footer-container">
-    <div class="footer-grid">
-      <div>
-        <div class="brand">
-          <div class="logo">R</div>
-          <h2>Retro Jersey</h2>
-        </div>
-        <p>Curating iconic football moments through premium retro jerseys. Based in Accra, shipping nationwide.</p>
-      </div>
-      <div>
-        <h3>SUPPORT</h3>
-        <p><a href="#">Shipping Policy</a></p>
-        <p><a href="#">Size Guide</a></p>
-      </div>
-      <div>
-        <h3>CONTACT</h3>
-        <p>📞 054 146 8102</p>
-        <p>📍 East Legon, Accra</p>
-      </div>
-    </div>
-    <div class="footer-bottom">
-      © 2026 Retro Jersey Shop. All rights reserved.
-    </div>
-  </div>
+<div style="margin-top:80px;padding:32px;text-align:center;color:#64748b">
+© 2026 Retro Jersey Shop · Accra, Ghana · Relive the heritage
 </div>
 """, unsafe_allow_html=True)
