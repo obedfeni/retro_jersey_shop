@@ -268,8 +268,9 @@ else:
 
     st.markdown("---")
     st.markdown("📞 0541468102")
-    st.markdown("snapchat:retrojerseyshop)
+    st.markdown("snapchat:retrojerseyshop")
     st.markdown("Instagram: @retroshop")
         
+
 
 
