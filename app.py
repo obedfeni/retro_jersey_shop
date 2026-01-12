@@ -275,7 +275,7 @@ if "selected" in st.session_state:
              ])
 
             st.success("🎉 Order received!")
-            st.markdown(
+           st.markdown(
         f"""
         ### 📌 Your Payment Reference  
         will be sent to you on whats app or sms.
@@ -283,7 +283,7 @@ if "selected" in st.session_state:
         Please use this reference when making your Mobile Money payment.
         You will be contacted shortly.
         """
-        )
+             )
 
        del st.session_state.selected
 
@@ -298,5 +298,6 @@ st.markdown("""
 © 2026 Retro Jersey Shop · Accra, Ghana · Relive the heritage
 </div>
 """, unsafe_allow_html=True)
+
 
 
