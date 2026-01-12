@@ -256,7 +256,6 @@ if "selected" in st.session_state:
         phone = st.text_input("Phone / WhatsApp")
         location = st.text_input("Delivery Location")
         qty = st.number_input("Quantity", min_value=1)
-        amount = st.number_input("Amount Paid", min_value=0)
         send = st.form_submit_button("Submit Order")
 
         if send and name and phone and location:
@@ -266,9 +265,9 @@ if "selected" in st.session_state:
                 name,
                 phone,
                 location,
-                p["name"],
+                items["name"],
                 qty,
-                amount,
+                amount["price"],
                 reference,
                 datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 "Pending"
@@ -296,3 +295,4 @@ st.markdown("""
  © 2026 Retro Jersey Shop · Accra, Ghana · Relive the heritage
 </div>
 """, unsafe_allow_html=True)
+
