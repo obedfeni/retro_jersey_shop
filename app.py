@@ -17,6 +17,35 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="collapsed"
 )
+# ===== ADMIN MENU (TOP-LEFT ⋮) =====
+st.markdown("""
+<style>
+.admin-menu {
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  z-index: 9999;
+}
+.admin-menu button {
+  background: transparent;
+  border: none;
+  font-size: 26px;
+  cursor: pointer;
+  color: #0f172a;
+}
+.admin-menu button:hover {
+  color: #2563eb;
+}
+.admin-modal {
+  background: white;
+  padding: 24px;
+  border-radius: 16px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+  max-width: 320px;
+}
+</style>
+""", unsafe_allow_html=True)
+
 
 # ---------------- HIDE STREAMLIT UI ----------------
 st.markdown("""
@@ -46,6 +75,13 @@ h1,h2,h3,h4 { color:#1e3a8a }
 .small { font-size:0.9rem; color:#334155 }
 </style>
 """, unsafe_allow_html=True)
+# ===== TOP-LEFT ADMIN MENU BUTTON =====
+with st.container():
+    col = st.columns([0.08, 0.92])[0]
+    with col:
+        if st.button("⋮", key="admin_menu"):
+            st.session_state.show_admin_login = not st.session_state.show_admin_login
+
 
 # ---------------- GOOGLE SHEETS AUTH ----------------
 scope = [
@@ -84,6 +120,11 @@ products_df = load_products()
 # ---------------- ADMIN SESSION ----------------
 if "admin_logged" not in st.session_state:
     st.session_state.admin_logged = False
+if "admin_mode" not in st.session_state:
+    st.session_state.admin_mode = False
+if "show_admin_login" not in st.session_state:
+    st.session_state.show_admin_login = False
+
 
 # ---------------- ADMIN LOGIN ----------------
 with st.expander("🔒 Admin Login"):
@@ -226,7 +267,9 @@ else:
                 del st.session_state.selected
 
     st.markdown("---")
-    st.markdown("📞 0541468102 | WhatsApp available")
+    st.markdown("📞 0541468102")
+    st.markdown("snapchat:retrojerseyshop)
     st.markdown("Instagram: @retroshop")
         
+
 
