@@ -52,8 +52,8 @@ h1,h2,h3,h4 { color:#1e3a8a }
 }
 .small { font-size:0.9rem; color:#334155 }
 .logo {
-    width:44px;
-    height:44px;
+    width:55px;
+    height:55px;
     background:#2563eb;
     border-radius:10px;
     color:white;
@@ -266,6 +266,9 @@ if "selected" in st.session_state:
 # ==============================
 st.markdown("""
 <div style="margin-top:80px;padding:32px;text-align:center;color:#64748b">
+ 📞:0541468102
+ snapchat: @retroshop
 © 2026 Retro Jersey Shop · Accra, Ghana · Relive the heritage
 </div>
 """, unsafe_allow_html=True)
+
