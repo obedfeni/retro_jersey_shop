@@ -21,10 +21,9 @@ st.set_page_config(
 # ---------------- SESSION STATE ----------------
 if "admin_logged" not in st.session_state:
     st.session_state.admin_logged = False
+
 if "show_admin_login" not in st.session_state:
     st.session_state.show_admin_login = False
-if "tap_count" not in st.session_state:
-    st.session_state.tap_count = 0
 
 # ---------------- HIDE STREAMLIT UI ----------------
 st.markdown("""
@@ -36,7 +35,7 @@ header {visibility: hidden;}
 </style>
 """, unsafe_allow_html=True)
 
-# ---------------- THEME ----------------
+# ---------------- GLOBAL THEME ----------------
 st.markdown("""
 <style>
 html, body, .stApp { background:#f0f6ff; color:#0d1b2a; }
@@ -52,6 +51,18 @@ h1,h2,h3,h4 { color:#1e3a8a }
     margin-bottom:20px
 }
 .small { font-size:0.9rem; color:#334155 }
+.logo {
+    width:44px;
+    height:44px;
+    background:#2563eb;
+    border-radius:10px;
+    color:white;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:800;
+    font-size:22px;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -90,43 +101,47 @@ def load_products():
 products_df = load_products()
 
 # ==============================
-# HEADER (SECRET ADMIN TAP)
+# HEADER + SECRET ADMIN TRIGGER
 # ==============================
-col1, col2 = st.columns([0.7, 0.3])
+col1, col2, col3 = st.columns([0.1, 0.6, 0.3])
+
 with col1:
-    if st.button("Retro Jersey Shop", key="logo_tap"):
-        st.session_state.tap_count += 1
-        if st.session_state.tap_count >= 5:
-            st.session_state.show_admin_login = True
+    st.markdown("<div class='logo'>R</div>", unsafe_allow_html=True)
 
 with col2:
-    st.markdown("<p style='text-align:right;'>Premium retro jerseys</p>", unsafe_allow_html=True)
+    st.markdown("## Retro Jersey Shop")
+    st.markdown("<p class='small'>Premium retro jerseys delivered to your door</p>", unsafe_allow_html=True)
+
+with col3:
+    search = st.text_input("Search", placeholder="Search jerseys...")
+
+    # 🔐 SECRET ADMIN TRIGGER
+    if search.strip().lower() == "admin2026":
+        st.session_state.show_admin_login = True
 
 st.markdown("---")
 
 # ==============================
-# ADMIN LOGIN (HIDDEN)
+# 🔐 ADMIN LOGIN (SECRET)
 # ==============================
 if st.session_state.show_admin_login and not st.session_state.admin_logged:
-    with st.container():
-        st.markdown("### 🔒 Admin Login")
-        u = st.text_input("Username")
-        p = st.text_input("Password", type="password")
-        if st.button("Login"):
-            if (
-                u == os.environ.get("ADMIN_USERNAME", "admin")
-                and p == os.environ.get("ADMIN_PASSWORD", "change_me")
-            ):
-                st.session_state.admin_logged = True
-                st.session_state.show_admin_login = False
-                st.session_state.tap_count = 0
-                st.success("Admin access granted")
-                st.rerun()
-            else:
-                st.error("Invalid credentials")
+    st.markdown("### 🔐 Admin Login")
+
+    password = st.text_input("Admin Password", type="password")
+
+    if st.button("Login"):
+        if password == os.environ.get("ADMIN_PASSWORD", "change_me"):
+            st.session_state.admin_logged = True
+            st.session_state.show_admin_login = False
+            st.success("Admin access granted")
+            st.rerun()
+        else:
+            st.error("Invalid password")
+
+    st.stop()
 
 # ==============================
-# ADMIN DASHBOARD
+# 📊 ADMIN DASHBOARD
 # ==============================
 if st.session_state.admin_logged:
 
@@ -134,7 +149,6 @@ if st.session_state.admin_logged:
 
     if st.button("🚪 Logout"):
         st.session_state.admin_logged = False
-        st.session_state.tap_count = 0
         st.rerun()
 
     # ADD PRODUCT
@@ -193,64 +207,65 @@ if st.session_state.admin_logged:
     orders_df = pd.DataFrame(
         orders_sheet.get_all_records(expected_headers=[
             "name","phone","location",
-            "product_id","qty","amount","timestamp","status"
+            "qty","amount","timestamp","status"
         ])
     )
     st.dataframe(orders_df, use_container_width=True)
 
+    st.stop()
+
 # ==============================
-# PUBLIC SHOP
+# 🛍️ PUBLIC SHOP
 # ==============================
+if products_df.empty:
+    st.info("No products available")
 else:
-    if products_df.empty:
-        st.info("No products available")
-    else:
-        cols = st.columns(3)
-        for i, row in products_df.iterrows():
-            with cols[i % 3]:
-                st.markdown("<div class='card'>", unsafe_allow_html=True)
-                st.image(row["image1"], width=260)
-                st.markdown(f"### {row['name']}")
-                st.markdown(f"<p class='small'>{row['description']}</p>", unsafe_allow_html=True)
-                st.markdown(f"**Price:** GHS {row['price']}")
+    cols = st.columns(3)
+    for i, row in products_df.iterrows():
+        with cols[i % 3]:
+            st.markdown("<div class='card'>", unsafe_allow_html=True)
+            st.image(row["image1"], width=260)
+            st.markdown(f"### {row['name']}")
+            st.markdown(f"<p class='small'>{row['description']}</p>", unsafe_allow_html=True)
+            st.markdown(f"**Price:** GHS {row['price']}")
 
-                if row["status"] == "Out of Stock":
-                    st.error("Out of Stock")
-                else:
-                    if st.button("Order", key=f"order_{row['id']}"):
-                        st.session_state.selected = row
+            if row["status"] == "Out of Stock":
+                st.error("Out of Stock")
+            else:
+                if st.button("Order", key=f"order_{row['id']}"):
+                    st.session_state.selected = row
 
-                st.markdown("</div>", unsafe_allow_html=True)
+            st.markdown("</div>", unsafe_allow_html=True)
 
-    # ORDER FORM
-    if "selected" in st.session_state:
-        p = st.session_state.selected
-        st.markdown("---")
-        st.markdown(f"## Order: {p['name']}")
-
-        with st.form("order"):
-            name = st.text_input("Your Name")
-            phone = st.text_input("Phone / WhatsApp")
-            location = st.text_input("Delivery Location")
-            qty = st.number_input("Quantity", min_value=1)
-            amount = st.number_input("Amount Paid", min_value=0)
-            send = st.form_submit_button("Submit Order")
-
-            if send and name and phone and location:
-                orders_sheet.append_row([
-                    name, phone, location, p["id"],
-                    qty, amount,
-                    datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                    "Pending"
-                ])
-                st.success("Order received 🎉")
-                del st.session_state.selected
-
-    # FOOTER
+# ORDER FORM
+if "selected" in st.session_state:
+    p = st.session_state.selected
     st.markdown("---")
-    st.markdown("""
-    📞 **054 146 8102**  
-    📍 East Legon, Accra  
-    Instagram: **@retroshop**
-    """)
+    st.markdown(f"## Order: {p['name']}")
 
+    with st.form("order"):
+        name = st.text_input("Your Name")
+        phone = st.text_input("Phone / WhatsApp")
+        location = st.text_input("Delivery Location")
+        qty = st.number_input("Quantity", min_value=1)
+        amount = st.number_input("Amount Paid", min_value=0)
+        send = st.form_submit_button("Submit Order")
+
+        if send and name and phone and location:
+            orders_sheet.append_row([
+                name, phone, location, p["id"],
+                qty, amount,
+                datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "Pending"
+            ])
+            st.success("Order received 🎉")
+            del st.session_state.selected
+
+# ==============================
+# FOOTER
+# ==============================
+st.markdown("""
+<div style="margin-top:80px;padding:32px;text-align:center;color:#64748b">
+© 2026 Retro Jersey Shop · Accra, Ghana · Relive the heritage
+</div>
+""", unsafe_allow_html=True)
