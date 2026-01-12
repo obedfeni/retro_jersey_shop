@@ -10,6 +10,14 @@ import pandas as pd
 import os, json, base64
 from datetime import datetime
 from oauth2client.service_account import ServiceAccountCredentials
+import random
+
+def generate_reference(product_name, location):
+    product_code = product_name[:3].upper()
+    location_code = location[:3].upper()
+    rand = random.randint(1000, 9999)
+    return f"RJ-{product_code}-{location_code}-{rand}"
+
 
 # ---------------- PAGE CONFIG ----------------
 st.set_page_config(
@@ -206,8 +214,8 @@ if st.session_state.admin_logged:
     st.markdown("## 📦 Orders")
     orders_df = pd.DataFrame(
         orders_sheet.get_all_records(expected_headers=[
-            "name","phone","location",
-            "qty","amount","timestamp","status"
+            "name","phone","location","items"
+            "qty","amount","reference","timestamp","status"
         ])
     )
     st.dataframe(orders_df, use_container_width=True)
@@ -252,14 +260,33 @@ if "selected" in st.session_state:
         send = st.form_submit_button("Submit Order")
 
         if send and name and phone and location:
-            orders_sheet.append_row([
-                name, phone, location, p["id"],
-                qty, amount,
-                datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                "Pending"
-            ])
-            st.success("Order received 🎉")
-            del st.session_state.selected
+           reference = generate_reference(p["name"], location)
+
+           orders_sheet.append_row([
+            name,
+            phone,
+            location,
+            p["name"],
+            qty,
+            amount,
+            reference,
+            datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "Pending"
+             ])
+
+            st.success("🎉 Order received!")
+            st.markdown(
+        f"""
+        ### 📌 Your Payment Reference  
+        will be sent to you on whats app or sms.
+
+        Please use this reference when making your Mobile Money payment.
+        You will be contacted shortly.
+        """
+        )
+
+       del st.session_state.selected
+
 
 # ==============================
 # FOOTER
@@ -271,4 +298,5 @@ st.markdown("""
 © 2026 Retro Jersey Shop · Accra, Ghana · Relive the heritage
 </div>
 """, unsafe_allow_html=True)
+
 
