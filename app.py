@@ -260,14 +260,15 @@ if "selected" in st.session_state:
 
         if send and name and phone and location:
             reference = generate_reference(p["name"], location)
+            amount = int(p["price"]) * int(qty)
 
             orders_sheet.append_row([
                 name,
                 phone,
                 location,
-                items["name"],
+                p["name"],
                 qty,
-                amount["price"],
+                amount,
                 reference,
                 datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 "Pending"
@@ -275,12 +276,11 @@ if "selected" in st.session_state:
 
             st.success("🎉 Order received!")
 
-            st.markdown("""
-            ### 📌 Payment Reference
-            Your payment reference will be sent to you via WhatsApp or SMS.
-
-            Please use it when making your Mobile Money payment.
-            You will be contacted shortly.
+            st.markdown(f"""
+            ### 📌 A unique code will be sent to you after order is confirmed.
+             You will be contacted via WhatsApp or SMS.
+            Use this code as your reference when making your Mobile Money payment.
+           
             """)
 
             del st.session_state.selected
@@ -295,4 +295,3 @@ st.markdown("""
  © 2026 Retro Jersey Shop · Accra, Ghana · Relive the heritage
 </div>
 """, unsafe_allow_html=True)
-
