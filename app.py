@@ -12,12 +12,12 @@ from datetime import datetime
 from oauth2client.service_account import ServiceAccountCredentials
 import random
 
+# ---------------- REFERENCE GENERATOR ----------------
 def generate_reference(product_name, location):
     product_code = product_name[:3].upper()
     location_code = location[:3].upper()
     rand = random.randint(1000, 9999)
     return f"RJ-{product_code}-{location_code}-{rand}"
-
 
 # ---------------- PAGE CONFIG ----------------
 st.set_page_config(
@@ -122,8 +122,6 @@ with col2:
 
 with col3:
     search = st.text_input("Search", placeholder="Search jerseys...")
-
-    # 🔐 SECRET ADMIN TRIGGER
     if search.strip().lower() == "admin2026":
         st.session_state.show_admin_login = True
 
@@ -214,7 +212,7 @@ if st.session_state.admin_logged:
     st.markdown("## 📦 Orders")
     orders_df = pd.DataFrame(
         orders_sheet.get_all_records(expected_headers=[
-            "name","phone","location","items"
+            "name","phone","location","items",
             "qty","amount","reference","timestamp","status"
         ])
     )
@@ -245,7 +243,9 @@ else:
 
             st.markdown("</div>", unsafe_allow_html=True)
 
+# ==============================
 # ORDER FORM
+# ==============================
 if "selected" in st.session_state:
     p = st.session_state.selected
     st.markdown("---")
@@ -260,44 +260,39 @@ if "selected" in st.session_state:
         send = st.form_submit_button("Submit Order")
 
         if send and name and phone and location:
-           reference = generate_reference(p["name"], location)
+            reference = generate_reference(p["name"], location)
 
-           orders_sheet.append_row([
-            name,
-            phone,
-            location,
-            p["name"],
-            qty,
-            amount,
-            reference,
-            datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "Pending"
-             ])
+            orders_sheet.append_row([
+                name,
+                phone,
+                location,
+                p["name"],
+                qty,
+                amount,
+                reference,
+                datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "Pending"
+            ])
 
             st.success("🎉 Order received!")
-           st.markdown(
-        f"""
-        ### 📌 Your Payment Reference  
-        will be sent to you on whats app or sms.
 
-        Please use this reference when making your Mobile Money payment.
-        You will be contacted shortly.
-        """
-             )
+            st.markdown("""
+            ### 📌 Payment Reference
+            Your payment reference will be sent to you via WhatsApp or SMS.
 
-       del st.session_state.selected
+            Please use it when making your Mobile Money payment.
+            You will be contacted shortly.
+            """)
 
+            del st.session_state.selected
 
 # ==============================
 # FOOTER
 # ==============================
 st.markdown("""
 <div style="margin-top:80px;padding:32px;text-align:center;color:#64748b">
- 📞:0541468102
- snapchat: @retroshop
-© 2026 Retro Jersey Shop · Accra, Ghana · Relive the heritage
+ 📞 0541468102<br>
+ Snapchat: @retroshop<br><br>
+ © 2026 Retro Jersey Shop · Accra, Ghana · Relive the heritage
 </div>
 """, unsafe_allow_html=True)
-
-
-
