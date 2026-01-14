@@ -2,7 +2,7 @@
 # Retro Jersey Shop – Professional Edition
 # Hosting: Render
 # Backend: Google Sheets
-# Notifications: Telegram Bot
+# Notifications: Telegram + Email
 # ==============================
 
 import streamlit as st
@@ -13,6 +13,9 @@ from datetime import datetime
 from oauth2client.service_account import ServiceAccountCredentials
 import random
 import requests
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 # ---------------- REFERENCE GENERATOR ----------------
 def generate_reference(product_name, location):
@@ -20,6 +23,33 @@ def generate_reference(product_name, location):
     location_code = location[:3].upper()
     rand = random.randint(1000, 9999)
     return f"RJ-{product_code}-{location_code}-{rand}"
+
+# ---------------- EMAIL NOTIFICATION ----------------
+def send_email_notification(subject, message):
+    """Send email notification using Gmail SMTP"""
+    admin_email = os.environ.get("ADMIN_EMAIL")
+    email_password = os.environ.get("EMAIL_APP_PASSWORD")
+    
+    if not admin_email or not email_password:
+        return False
+    
+    try:
+        msg = MIMEMultipart()
+        msg['From'] = admin_email
+        msg['To'] = admin_email
+        msg['Subject'] = subject
+        
+        msg.attach(MIMEText(message, 'html'))
+        
+        server = smtplib.SMTP('smtp.gmail.com', 587)
+        server.starttls()
+        server.login(admin_email, email_password)
+        server.send_message(msg)
+        server.quit()
+        return True
+    except Exception as e:
+        print(f"Email error: {e}")
+        return False
 
 # ---------------- TELEGRAM NOTIFICATION ----------------
 def send_telegram_notification(message):
@@ -39,7 +69,8 @@ def send_telegram_notification(message):
         }
         response = requests.post(url, data=data, timeout=10)
         return response.status_code == 200
-    except:
+    except Exception as e:
+        print(f"Telegram error: {e}")
         return False
 
 # ---------------- PAGE CONFIG ----------------
@@ -74,7 +105,7 @@ header {visibility: hidden;}
 </style>
 """, unsafe_allow_html=True)
 
-# ---------------- CLEAN E-COMMERCE THEME (Amazon/Etsy Style) ----------------
+# ---------------- CLEAN E-COMMERCE THEME (Mobile Optimized) ----------------
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
@@ -90,15 +121,15 @@ h1, h2, h3, h4 {
     font-weight: 600;
 }
 
-/* Top Navigation Bar */
+/* Top Navigation Bar - Mobile Optimized */
 .top-nav {
     background: #ffffff;
-    padding: 16px 40px;
+    padding: 20px 20px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
     margin-bottom: 0;
     display: flex;
     align-items: center;
-    gap: 30px;
+    gap: 15px;
     position: sticky;
     top: 0;
     z-index: 1000;
@@ -107,52 +138,55 @@ h1, h2, h3, h4 {
 .logo-container {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 15px;
+    flex: 1;
 }
 
 .logo-icon {
-    width: 42px;
-    height: 42px;
+    width: 60px;
+    height: 60px;
     background: #2874f0;
-    border-radius: 8px;
+    border-radius: 12px;
     color: white;
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: 700;
-    font-size: 20px;
+    font-size: 28px;
+    flex-shrink: 0;
 }
 
 .logo-text {
-    font-size: 22px;
+    font-size: 24px;
     font-weight: 700;
     color: #232f3e;
     margin: 0;
+    line-height: 1.2;
 }
 
 .nav-tagline {
-    font-size: 11px;
+    font-size: 12px;
     color: #565959;
-    margin: 0;
+    margin: 3px 0 0 0;
     font-style: italic;
 }
 
-/* Admin Link in Nav */
-.admin-nav-link {
-    margin-left: auto;
-    padding: 8px 16px;
-    background: #f0f2f2;
-    border-radius: 6px;
-    color: #565959;
-    text-decoration: none;
-    font-size: 13px;
-    font-weight: 500;
-    transition: all 0.2s;
-}
-
-.admin-nav-link:hover {
-    background: #e7e9ec;
-    color: #232f3e;
+/* Mobile responsive header */
+@media (max-width: 768px) {
+    .top-nav {
+        padding: 15px 15px;
+    }
+    .logo-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 24px;
+    }
+    .logo-text {
+        font-size: 18px;
+    }
+    .nav-tagline {
+        font-size: 10px;
+    }
 }
 
 /* Content Container */
@@ -161,6 +195,12 @@ h1, h2, h3, h4 {
     margin: 0 auto;
     padding: 30px 20px;
     background: #f7f9fc;
+}
+
+@media (max-width: 768px) {
+    .content-wrapper {
+        padding: 20px 10px;
+    }
 }
 
 /* Section Headers */
@@ -298,6 +338,14 @@ h1, h2, h3, h4 {
     border-color: #d5d9d9;
 }
 
+/* Small Admin Button */
+.admin-btn-small button {
+    padding: 6px 12px !important;
+    font-size: 12px !important;
+    width: auto !important;
+    min-width: 100px !important;
+}
+
 /* Admin Card */
 .admin-container {
     background: white;
@@ -309,13 +357,6 @@ h1, h2, h3, h4 {
 }
 
 /* Stats Cards */
-.stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 20px;
-    margin-bottom: 30px;
-}
-
 .stat-card {
     background: white;
     border: 1px solid #e7e9ec;
@@ -516,7 +557,6 @@ if st.session_state.show_admin_login and not st.session_state.admin_logged:
     
     st.markdown("</div>", unsafe_allow_html=True)
     
-    # Show link back to shop
     if st.button("← Back to Shop"):
         st.session_state.show_admin_login = False
         st.rerun()
@@ -537,20 +577,27 @@ if st.session_state.admin_logged:
             st.session_state.admin_logged = False
             st.rerun()
     
-    # Check Telegram Configuration
+    # Check Notification Configuration
     telegram_configured = bool(os.environ.get("TELEGRAM_BOT_TOKEN") and os.environ.get("TELEGRAM_CHAT_ID"))
+    email_configured = bool(os.environ.get("ADMIN_EMAIL") and os.environ.get("EMAIL_APP_PASSWORD"))
     
-    if not telegram_configured:
+    if not telegram_configured and not email_configured:
         st.markdown("""
         <div class='info-box'>
-            ⚠️ <strong>Telegram notifications not configured!</strong><br>
-            Set up your Telegram bot to receive instant order notifications. See instructions below.
+            ⚠️ <strong>No notifications configured!</strong><br>
+            Set up Telegram or Email to receive instant order alerts.
         </div>
         """, unsafe_allow_html=True)
     else:
-        st.markdown("""
+        notif_status = []
+        if telegram_configured:
+            notif_status.append("Telegram")
+        if email_configured:
+            notif_status.append("Email")
+        
+        st.markdown(f"""
         <div style='background:#e7f5e9; border:1px solid #c6e9d0; border-radius:8px; padding:16px; margin:20px 0;'>
-            ✅ <strong>Telegram notifications active!</strong> You'll receive instant alerts for new orders.
+            ✅ <strong>Notifications active via: {', '.join(notif_status)}</strong>
         </div>
         """, unsafe_allow_html=True)
     
@@ -663,41 +710,51 @@ if st.session_state.admin_logged:
         st.info("No orders yet")
     st.markdown("</div>", unsafe_allow_html=True)
     
-    # TELEGRAM SETUP INSTRUCTIONS
+    # NOTIFICATION SETUP
     st.markdown("<div class='admin-container'>", unsafe_allow_html=True)
-    st.markdown("### 📱 Telegram Notification Setup")
+    st.markdown("### 🔔 Notification Setup")
     
-    with st.expander("📖 How to Set Up Telegram Bot (5 minutes)", expanded=not telegram_configured):
+    tab1, tab2 = st.tabs(["📧 Email (Free)", "📱 Telegram (Free)"])
+    
+    with tab1:
         st.markdown("""
-        **Step 1: Create Your Bot**
-        1. Open Telegram and search for `@BotFather`
-        2. Send `/newbot` command
-        3. Choose a name (e.g., "Retro Jersey Alerts")
-        4. Choose a username (e.g., "retrojersey_bot")
-        5. Copy the **Bot Token** (looks like: `123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11`)
+        **Setup Gmail Notifications (5 minutes)**
         
-        **Step 2: Get Your Chat ID**
-        1. Search for `@userinfobot` on Telegram
-        2. Send any message to it
-        3. Copy your **Chat ID** (looks like: `123456789`)
+        1. **Get App Password:**
+           - Go to [Google Account](https://myaccount.google.com)
+           - Security → 2-Step Verification (enable if not enabled)
+           - Scroll down → App passwords
+           - Select app: Mail, Device: Other (name it "Store")
+           - Click Generate → Copy the 16-character password
         
-        **Step 3: Add to Render**
-        1. Go to your Render dashboard
-        2. Click on your app → Environment
-        3. Add these two variables:
-           - `TELEGRAM_BOT_TOKEN` = Your bot token from Step 1
-           - `TELEGRAM_CHAT_ID` = Your chat ID from Step 2
-        4. Click "Save Changes"
+        2. **Add to Render:**
+           - `ADMIN_EMAIL` = your_email@gmail.com
+           - `EMAIL_APP_PASSWORD` = the 16-char password (no spaces)
         
-        **Step 4: Start Your Bot**
-        1. Open your bot in Telegram
-        2. Send `/start` command
-        3. Done! You'll now get instant order notifications! 🎉
+        3. **Done!** You'll get emails for new orders.
+        """)
+    
+    with tab2:
+        st.markdown("""
+        **Setup Telegram Bot (5 minutes)**
         
-        ---
+        1. **Create Bot:**
+           - Search `@BotFather` on Telegram
+           - Send `/newbot`
+           - Name: "Store Alerts"
+           - Username: "yourstore_bot"
+           - Copy TOKEN
         
-        **Test Your Setup:**
-        After adding the environment variables, place a test order to see if notifications work!
+        2. **Get Chat ID:**
+           - Search `@userinfobot`
+           - Send any message
+           - Copy your ID
+        
+        3. **Add to Render:**
+           - `TELEGRAM_BOT_TOKEN` = your bot token
+           - `TELEGRAM_CHAT_ID` = your chat ID
+        
+        4. **Start bot:** Send `/start` to your bot
         """)
     
     st.markdown("</div>", unsafe_allow_html=True)
@@ -708,12 +765,14 @@ if st.session_state.admin_logged:
 # 🛍️ PUBLIC SHOP
 # ==============================
 
-# Show admin login link (subtle, in corner)
+# Small admin button
 col1, col2, col3 = st.columns([2, 1, 1])
 with col3:
-    if st.button("🔐 Admin", use_container_width=True):
+    st.markdown("<div class='admin-btn-small'>", unsafe_allow_html=True)
+    if st.button("🔐 Admin"):
         st.session_state.show_admin_login = True
         st.rerun()
+    st.markdown("</div>", unsafe_allow_html=True)
 
 st.markdown("<div class='section-header'>Featured Products</div>", unsafe_allow_html=True)
 
@@ -781,6 +840,7 @@ if "selected" in st.session_state:
         
         if send and name and phone and location:
             reference = generate_reference(p["name"], location)
+            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             
             orders_sheet.append_row([
                 name,
@@ -790,42 +850,48 @@ if "selected" in st.session_state:
                 qty,
                 total,
                 reference,
-                datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                timestamp,
                 "Pending"
             ])
             
             # Send Telegram Notification
-            telegram_message = f"""
-🛒 <b>NEW ORDER RECEIVED!</b>
+            telegram_message = f"""🛒 <b>NEW ORDER!</b>
 
 📦 <b>Product:</b> {p['name']}
 👤 <b>Customer:</b> {name}
 📱 <b>Phone:</b> {phone}
 📍 <b>Location:</b> {location}
-🔢 <b>Quantity:</b> {qty}
+🔢 <b>Qty:</b> {qty}
 💰 <b>Total:</b> GHS {total}
-🔖 <b>Reference:</b> {reference}
-⏰ <b>Time:</b> {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
+🔖 <b>Ref:</b> {reference}
+⏰ <b>Time:</b> {timestamp}
 
-Status: ⏳ Pending
-"""
-            send_telegram_notification(telegram_message)
+Status: ⏳ Pending"""
             
-            st.markdown(f"""
-            <div class='success-message'>
-                <h3 style='margin:0 0 10px 0;'>✅ Order Placed Successfully!</h3>
-                <p style='margin:0;'>
-                    Thank you for your order! We'll contact you via WhatsApp or SMS with your payment reference code.
-                </p>
-                <p style='margin:10px 0 0 0;'><strong>Total: GHS {total}</strong></p>
-            </div>
-            """, unsafe_allow_html=True)
+            telegram_sent = send_telegram_notification(telegram_message)
             
-            del st.session_state.selected
-    
-    st.markdown("</div>", unsafe_allow_html=True)
-
-st.markdown("</div>", unsafe_allow_html=True)
+            # Send Email Notification
+            email_subject = f"🛒 New Order: {reference}"
+            email_body = f"""
+            <html>
+            <body style='font-family: Arial, sans-serif;'>
+                <h2 style='color: #2874f0;'>New Order Received!</h2>
+                <table style='border-collapse: collapse; width: 100%;'>
+                    <tr><td style='padding: 8px; border-bottom: 1px solid #ddd;'><strong>Product:</strong></td><td style='padding: 8px; border-bottom: 1px solid #ddd;'>{p['name']}</td></tr>
+                    <tr><td style='padding: 8px; border-bottom: 1px solid #ddd;'><strong>Customer:</strong></td><td style='padding: 8px; border-bottom: 1px solid #ddd;'>{name}</td></tr>
+                    <tr><td style='padding: 8px; border-bottom: 1px solid #ddd;'><strong>Phone:</strong></td><td style='padding: 8px; border-bottom: 1px solid #ddd;'>{phone}</td></tr>
+                    <tr><td style='padding: 8px; border-bottom: 1px solid #ddd;'><strong>Location:</strong></td><td style='padding: 8px; border-bottom: 1px solid #ddd;'>{location}</td></tr>
+                    <tr><td style='padding: 8px; border-bottom: 1px solid #ddd;'><strong>Quantity:</strong></td><td style='padding: 8px; border-bottom: 1px solid #ddd;'>{qty}</td></tr>
+                    <tr><td style='padding: 8px; border-bottom: 1px solid #ddd;'><strong>Total:</strong></td><td style='padding: 8px; border-bottom: 1px solid #ddd;'>GHS {total}</td></tr>
+                    <tr><td style='padding: 8px; border-bottom: 1px solid #ddd;'><strong>Reference:</strong></td><td style='padding: 8px; border-bottom: 1px solid #ddd;'>{reference}</td></tr>
+                    <tr><td style='padding: 8px; border-bottom: 1px solid #ddd;'><strong>Time:</strong></td><td style='padding: 8px; border-bottom: 1px solid #ddd;'>{timestamp}</td></tr>
+                </table>
+                <p style='margin-top: 20px; color: #666;'>Status: Pending</p>
+            </body>
+            </html>
+            """
+            
+            email_sent = send_email_notification(email_subject, email_body)
 
 # ==============================
 # FOOTER
@@ -844,3 +910,4 @@ st.markdown("""
     </div>
 </div>
 """, unsafe_allow_html=True)
+
