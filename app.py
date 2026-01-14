@@ -46,217 +46,302 @@ header {visibility: hidden;}
 </style>
 """, unsafe_allow_html=True)
 
-# ---------------- PROFESSIONAL THEME ----------------
+# ---------------- CLEAN E-COMMERCE THEME (Amazon/Etsy Style) ----------------
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 html, body, .stApp { 
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: #1a1a2e;
-    font-family: 'Inter', sans-serif;
+    background: #f7f9fc;
+    color: #232f3e;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 h1, h2, h3, h4 { 
-    color: #1a1a2e;
-    font-weight: 700;
+    color: #232f3e;
+    font-weight: 600;
 }
 
-/* Header Styles */
-.header-container {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px);
-    padding: 20px 40px;
-    border-radius: 20px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-    margin-bottom: 40px;
+/* Top Navigation Bar */
+.top-nav {
+    background: #ffffff;
+    padding: 16px 40px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    margin-bottom: 0;
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: 30px;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
 }
 
-.logo-pro {
-    width: 70px;
-    height: 70px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border-radius: 16px;
+.logo-container {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.logo-icon {
+    width: 42px;
+    height: 42px;
+    background: #2874f0;
+    border-radius: 8px;
     color: white;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-weight: 900;
-    font-size: 32px;
-    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+    font-weight: 700;
+    font-size: 20px;
 }
 
-.header-text {
-    flex: 1;
-}
-
-.header-title {
-    font-size: 32px;
-    font-weight: 800;
-    color: #1a1a2e;
+.logo-text {
+    font-size: 22px;
+    font-weight: 700;
+    color: #232f3e;
     margin: 0;
-    line-height: 1.2;
 }
 
-.header-subtitle {
-    font-size: 14px;
-    color: #64748b;
-    margin: 5px 0 0 0;
+.nav-tagline {
+    font-size: 11px;
+    color: #565959;
+    margin: 0;
+    font-style: italic;
 }
 
-/* Product Card Styles */
+/* Content Container */
+.content-wrapper {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 30px 20px;
+    background: #f7f9fc;
+}
+
+/* Section Headers */
+.section-header {
+    font-size: 24px;
+    font-weight: 600;
+    color: #232f3e;
+    margin: 30px 0 20px 0;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #e7e9ec;
+}
+
+/* Product Card - Amazon/Etsy Style */
 .product-card {
-    background: white;
-    border-radius: 20px;
-    padding: 0;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-    transition: all 0.3s ease;
+    background: #ffffff;
+    border: 1px solid #e7e9ec;
+    border-radius: 8px;
     overflow: hidden;
+    transition: all 0.2s ease;
     height: 100%;
     display: flex;
     flex-direction: column;
 }
 
 .product-card:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+    border-color: #c7c9cc;
 }
 
-.product-image-container {
+.product-image-wrapper {
     width: 100%;
-    height: 280px;
-    overflow: hidden;
-    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    height: 300px;
+    background: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    border-bottom: 1px solid #e7e9ec;
     position: relative;
 }
 
-.product-image-container img {
+.product-image-wrapper img {
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain;
 }
 
-.product-badge {
+.stock-badge {
     position: absolute;
-    top: 15px;
-    right: 15px;
-    background: rgba(102, 126, 234, 0.95);
-    color: white;
-    padding: 6px 14px;
-    border-radius: 20px;
+    top: 12px;
+    right: 12px;
+    padding: 4px 12px;
+    border-radius: 4px;
     font-size: 12px;
     font-weight: 600;
-    backdrop-filter: blur(10px);
 }
 
-.product-content {
-    padding: 24px;
+.badge-in-stock {
+    background: #e7f5e9;
+    color: #067d62;
+}
+
+.badge-out-stock {
+    background: #fce8e8;
+    color: #c7254e;
+}
+
+.product-info {
+    padding: 16px;
     flex: 1;
     display: flex;
     flex-direction: column;
 }
 
-.product-name {
-    font-size: 20px;
-    font-weight: 700;
-    color: #1a1a2e;
+.product-title {
+    font-size: 16px;
+    font-weight: 500;
+    color: #0066c0;
     margin-bottom: 8px;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
 
 .product-description {
-    font-size: 14px;
-    color: #64748b;
-    line-height: 1.6;
-    margin-bottom: 16px;
+    font-size: 13px;
+    color: #565959;
+    line-height: 1.5;
+    margin-bottom: 12px;
     flex: 1;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
 
 .product-price {
-    font-size: 28px;
-    font-weight: 800;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    margin-bottom: 16px;
+    font-size: 24px;
+    font-weight: 700;
+    color: #b12704;
+    margin-bottom: 12px;
 }
 
-/* Button Styles */
+.price-currency {
+    font-size: 14px;
+    font-weight: 500;
+    color: #565959;
+    margin-right: 2px;
+}
+
+/* Buttons */
 .stButton>button {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border-radius: 12px;
-    padding: 14px 28px;
+    background: #ffd814;
+    color: #0f1111;
+    border: 1px solid #fcd200;
+    border-radius: 8px;
+    padding: 10px 20px;
     font-weight: 600;
-    border: none;
+    font-size: 14px;
     width: 100%;
-    font-size: 15px;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 5px rgba(213, 217, 217, 0.5);
 }
 
 .stButton>button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 25px rgba(102, 126, 234, 0.5);
+    background: #f7ca00;
+    border-color: #f2c200;
+}
+
+.stButton>button:disabled {
+    background: #f0f2f2;
+    color: #565959;
+    border-color: #d5d9d9;
 }
 
 /* Admin Card */
-.admin-card {
+.admin-container {
     background: white;
-    border-radius: 20px;
-    padding: 32px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e7e9ec;
+    border-radius: 8px;
+    padding: 30px;
+    margin-bottom: 24px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+/* Stats Cards */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
     margin-bottom: 30px;
+}
+
+.stat-card {
+    background: white;
+    border: 1px solid #e7e9ec;
+    border-radius: 8px;
+    padding: 24px;
+    text-align: center;
+}
+
+.stat-number {
+    font-size: 32px;
+    font-weight: 700;
+    color: #232f3e;
+    margin-bottom: 8px;
+}
+
+.stat-label {
+    font-size: 14px;
+    color: #565959;
+    font-weight: 500;
 }
 
 /* Form Styles */
 .stTextInput>div>div>input,
 .stTextArea>div>div>textarea,
 .stNumberInput>div>div>input {
-    border-radius: 12px;
-    border: 2px solid #e2e8f0;
-    padding: 12px 16px;
-    font-size: 15px;
-    transition: all 0.3s ease;
+    border-radius: 4px;
+    border: 1px solid #d5d9d9;
+    padding: 10px 12px;
+    font-size: 14px;
 }
 
 .stTextInput>div>div>input:focus,
 .stTextArea>div>div>textarea:focus,
 .stNumberInput>div>div>input:focus {
-    border-color: #667eea;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    border-color: #e77600;
+    box-shadow: 0 0 0 3px rgba(231, 118, 0, 0.1);
 }
 
 /* Order Form */
-.order-form-container {
+.order-container {
     background: white;
-    border-radius: 20px;
-    padding: 40px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-    margin-top: 40px;
+    border: 1px solid #e7e9ec;
+    border-radius: 8px;
+    padding: 30px;
+    margin: 30px 0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.order-summary {
+    background: #f0f2f2;
+    padding: 20px;
+    border-radius: 8px;
+    margin-top: 20px;
 }
 
 /* Success Message */
-.success-box {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    padding: 30px;
-    border-radius: 16px;
+.success-message {
+    background: #dff0d8;
+    border: 1px solid #d6e9c6;
+    color: #3c763d;
+    padding: 20px;
+    border-radius: 8px;
     margin: 20px 0;
-    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
 }
 
 /* Footer */
-.footer-pro {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px);
-    padding: 40px;
+.footer-section {
+    background: #232f3e;
+    color: #ffffff;
+    padding: 40px 20px;
+    margin-top: 60px;
     text-align: center;
-    border-radius: 20px;
-    margin-top: 80px;
-    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.1);
 }
 
 .footer-links {
@@ -268,61 +353,35 @@ h1, h2, h3, h4 {
 }
 
 .footer-link {
-    color: #667eea;
-    font-weight: 600;
-    text-decoration: none;
-    font-size: 15px;
-}
-
-/* Status Badge */
-.status-badge {
-    display: inline-block;
-    padding: 6px 16px;
-    border-radius: 20px;
-    font-size: 13px;
-    font-weight: 600;
-}
-
-.status-in-stock {
-    background: #d1fae5;
-    color: #065f46;
-}
-
-.status-out-stock {
-    background: #fee2e2;
-    color: #991b1b;
-}
-
-/* Admin Dashboard */
-.admin-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    padding: 30px;
-    border-radius: 20px;
-    margin-bottom: 30px;
-    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
-}
-
-.stat-card {
-    background: white;
-    border-radius: 16px;
-    padding: 24px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-    text-align: center;
-}
-
-.stat-number {
-    font-size: 36px;
-    font-weight: 800;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-}
-
-.stat-label {
-    color: #64748b;
+    color: #ffffff;
     font-size: 14px;
-    margin-top: 8px;
+    text-decoration: none;
+}
+
+.footer-link:hover {
+    text-decoration: underline;
+}
+
+.footer-copyright {
+    color: #999;
+    font-size: 12px;
+    margin-top: 20px;
+}
+
+/* Admin Login */
+.admin-login-box {
+    max-width: 400px;
+    margin: 60px auto;
+    background: white;
+    border: 1px solid #e7e9ec;
+    border-radius: 8px;
+    padding: 40px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+/* Dataframe Styling */
+.dataframe {
+    font-size: 14px;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -362,22 +421,27 @@ def load_products():
 products_df = load_products()
 
 # ==============================
-# PROFESSIONAL HEADER
+# TOP NAVIGATION
 # ==============================
 st.markdown("""
-<div class='header-container'>
-    <div class='logo-pro'>RJ</div>
-    <div class='header-text'>
-        <h1 class='header-title'>Retro Jersey Shop</h1>
-        <p class='header-subtitle'>Premium Vintage Jerseys • Authentic Heritage • Delivered Nationwide</p>
+<div class='top-nav'>
+    <div class='logo-container'>
+        <div class='logo-icon'>RJ</div>
+        <div>
+            <div class='logo-text'>Retro Jersey Shop</div>
+            <div class='nav-tagline'>Authentic vintage jerseys</div>
+        </div>
     </div>
 </div>
 """, unsafe_allow_html=True)
 
+# Content wrapper
+st.markdown("<div class='content-wrapper'>", unsafe_allow_html=True)
+
 # Secret admin trigger
 col1, col2, col3 = st.columns([2, 1, 1])
 with col3:
-    search = st.text_input("🔍 Search", placeholder="Search jerseys...", label_visibility="collapsed")
+    search = st.text_input("🔍 Search products", placeholder="Search...", label_visibility="collapsed")
     if search.strip().lower() == "admin2026":
         st.session_state.show_admin_login = True
 
@@ -385,21 +449,20 @@ with col3:
 # 🔐 ADMIN LOGIN
 # ==============================
 if st.session_state.show_admin_login and not st.session_state.admin_logged:
-    st.markdown("<div class='admin-card'>", unsafe_allow_html=True)
-    st.markdown("### 🔐 Admin Access")
+    st.markdown("<div class='admin-login-box'>", unsafe_allow_html=True)
+    st.markdown("### 🔐 Admin Login")
+    st.markdown("Enter your credentials to access the dashboard")
     
-    password = st.text_input("Enter Admin Password", type="password")
+    password = st.text_input("Password", type="password")
     
-    col1, col2 = st.columns([1, 3])
-    with col1:
-        if st.button("🚀 Login", use_container_width=True):
-            if password == os.environ.get("ADMIN_PASSWORD", "change_me"):
-                st.session_state.admin_logged = True
-                st.session_state.show_admin_login = False
-                st.success("✅ Admin access granted!")
-                st.rerun()
-            else:
-                st.error("❌ Invalid password")
+    if st.button("Login to Dashboard", use_container_width=True):
+        if password == os.environ.get("ADMIN_PASSWORD", "change_me"):
+            st.session_state.admin_logged = True
+            st.session_state.show_admin_login = False
+            st.success("✅ Login successful!")
+            st.rerun()
+        else:
+            st.error("❌ Incorrect password")
     
     st.markdown("</div>", unsafe_allow_html=True)
     st.stop()
@@ -409,12 +472,8 @@ if st.session_state.show_admin_login and not st.session_state.admin_logged:
 # ==============================
 if st.session_state.admin_logged:
     
-    st.markdown("""
-    <div class='admin-header'>
-        <h1 style='margin:0; color:white;'>📊 Admin Dashboard</h1>
-        <p style='margin:5px 0 0 0; color:rgba(255,255,255,0.9);'>Manage products and orders</p>
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown("<h1 style='color:#232f3e; margin-bottom:10px;'>📊 Admin Dashboard</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='color:#565959; margin-bottom:30px;'>Manage your store products and orders</p>", unsafe_allow_html=True)
     
     if st.button("🚪 Logout", use_container_width=False):
         st.session_state.admin_logged = False
@@ -457,8 +516,8 @@ if st.session_state.admin_logged:
     st.markdown("<br>", unsafe_allow_html=True)
     
     # ADD PRODUCT
-    st.markdown("<div class='admin-card'>", unsafe_allow_html=True)
-    st.markdown("## ➕ Add New Product")
+    st.markdown("<div class='admin-container'>", unsafe_allow_html=True)
+    st.markdown("### ➕ Add New Product")
     with st.form("add_product"):
         col1, col2 = st.columns(2)
         with col1:
@@ -473,7 +532,7 @@ if st.session_state.admin_logged:
             type=["png","jpg","jpeg"],
             accept_multiple_files=True
         )
-        add = st.form_submit_button("✨ Add Product", use_container_width=True)
+        add = st.form_submit_button("Add Product", use_container_width=True)
         
         if add and name and images:
             encoded = []
@@ -499,28 +558,34 @@ if st.session_state.admin_logged:
     st.markdown("</div>", unsafe_allow_html=True)
     
     # MANAGE PRODUCTS
-    st.markdown("<div class='admin-card'>", unsafe_allow_html=True)
-    st.markdown("## 📦 Manage Products")
+    st.markdown("<div class='admin-container'>", unsafe_allow_html=True)
+    st.markdown("### 🗂️ Manage Products")
     products_df = load_products()
     
-    cols = st.columns(3)
-    for idx, row in products_df.iterrows():
-        with cols[idx % 3]:
-            st.image(row["image1"], use_column_width=True)
-            st.markdown(f"**{row['name']}**")
-            st.markdown(f"Stock: {row['stock']} | GHS {row['price']}")
-            
-            if st.button(f"🗑️ Delete", key=f"del_{row['id']}", use_container_width=True):
-                products_sheet.delete_rows(row["_row"])
-                st.success("Product deleted!")
-                st.rerun()
+    if not products_df.empty:
+        cols = st.columns(3)
+        for idx, row in products_df.iterrows():
+            with cols[idx % 3]:
+                st.image(row["image1"], use_column_width=True)
+                st.markdown(f"**{row['name']}**")
+                st.markdown(f"Stock: {row['stock']} | GHS {row['price']}")
+                
+                if st.button(f"Delete Product", key=f"del_{row['id']}", use_container_width=True):
+                    products_sheet.delete_rows(row["_row"])
+                    st.success("Product deleted!")
+                    st.rerun()
+    else:
+        st.info("No products yet")
     
     st.markdown("</div>", unsafe_allow_html=True)
     
     # ORDERS
-    st.markdown("<div class='admin-card'>", unsafe_allow_html=True)
-    st.markdown("## 📋 Recent Orders")
-    st.dataframe(orders_df, use_container_width=True, height=400)
+    st.markdown("<div class='admin-container'>", unsafe_allow_html=True)
+    st.markdown("### 📦 Recent Orders")
+    if not orders_df.empty:
+        st.dataframe(orders_df, use_container_width=True, height=400)
+    else:
+        st.info("No orders yet")
     st.markdown("</div>", unsafe_allow_html=True)
     
     st.stop()
@@ -528,8 +593,7 @@ if st.session_state.admin_logged:
 # ==============================
 # 🛍️ PUBLIC SHOP
 # ==============================
-st.markdown("## 🔥 Featured Collection")
-st.markdown("<br>", unsafe_allow_html=True)
+st.markdown("<div class='section-header'>Featured Products</div>", unsafe_allow_html=True)
 
 if products_df.empty:
     st.info("🏗️ No products available at the moment. Check back soon!")
@@ -537,26 +601,28 @@ else:
     cols = st.columns(3)
     for idx, row in products_df.iterrows():
         with cols[idx % 3]:
-            status_class = "status-in-stock" if row["status"] == "In Stock" else "status-out-stock"
+            badge_class = "badge-in-stock" if row["status"] == "In Stock" else "badge-out-stock"
             
             st.markdown(f"""
             <div class='product-card'>
-                <div class='product-image-container'>
+                <div class='product-image-wrapper'>
                     <img src='{row["image1"]}' alt='{row["name"]}'>
-                    <div class='product-badge'>{row["status"]}</div>
+                    <div class='stock-badge {badge_class}'>{row["status"]}</div>
                 </div>
-                <div class='product-content'>
-                    <div class='product-name'>{row['name']}</div>
+                <div class='product-info'>
+                    <div class='product-title'>{row['name']}</div>
                     <div class='product-description'>{row['description']}</div>
-                    <div class='product-price'>GHS {row['price']}</div>
+                    <div class='product-price'>
+                        <span class='price-currency'>GHS</span>{row['price']}
+                    </div>
                 </div>
             </div>
             """, unsafe_allow_html=True)
             
             if row["status"] == "Out of Stock":
-                st.button("❌ Out of Stock", key=f"out_{row['id']}", disabled=True, use_container_width=True)
+                st.button("Unavailable", key=f"out_{row['id']}", disabled=True, use_container_width=True)
             else:
-                if st.button("🛒 Order Now", key=f"order_{row['id']}", use_container_width=True):
+                if st.button("Add to Cart", key=f"order_{row['id']}", use_container_width=True):
                     st.session_state.selected = row
 
 # ==============================
@@ -565,9 +631,9 @@ else:
 if "selected" in st.session_state:
     p = st.session_state.selected
     
-    st.markdown("<div class='order-form-container'>", unsafe_allow_html=True)
-    st.markdown(f"## 📝 Complete Your Order")
-    st.markdown(f"### {p['name']}")
+    st.markdown("<div class='order-container'>", unsafe_allow_html=True)
+    st.markdown(f"### Checkout")
+    st.markdown(f"**Product:** {p['name']}")
     
     with st.form("order"):
         col1, col2 = st.columns(2)
@@ -579,9 +645,17 @@ if "selected" in st.session_state:
             qty = st.number_input("Quantity *", min_value=1, value=1)
         
         total = int(p["price"]) * int(qty)
-        st.markdown(f"### Total: **GHS {total}**")
         
-        send = st.form_submit_button("🚀 Submit Order", use_container_width=True)
+        st.markdown(f"""
+        <div class='order-summary'>
+            <strong>Order Summary</strong><br>
+            Item: {p['name']}<br>
+            Quantity: {qty}<br>
+            <strong style='font-size:18px; color:#b12704;'>Total: GHS {total}</strong>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        send = st.form_submit_button("Place Order", use_container_width=True)
         
         if send and name and phone and location:
             reference = generate_reference(p["name"], location)
@@ -599,14 +673,12 @@ if "selected" in st.session_state:
             ])
             
             st.markdown(f"""
-            <div class='success-box'>
-                <h2 style='color:white; margin:0 0 15px 0;'>🎉 Order Received Successfully!</h2>
-                <p style='margin:0; font-size:16px;'>
-                    Your order has been placed. We'll contact you via WhatsApp or SMS with your unique reference code for payment.
+            <div class='success-message'>
+                <h3 style='margin:0 0 10px 0;'>✅ Order Placed Successfully!</h3>
+                <p style='margin:0;'>
+                    Thank you for your order! We'll contact you via WhatsApp or SMS with your payment reference code.
                 </p>
-                <p style='margin:15px 0 0 0; font-size:18px; font-weight:600;'>
-                    Total Amount: GHS {total}
-                </p>
+                <p style='margin:10px 0 0 0;'><strong>Total: GHS {total}</strong></p>
             </div>
             """, unsafe_allow_html=True)
             
@@ -614,18 +686,22 @@ if "selected" in st.session_state:
     
     st.markdown("</div>", unsafe_allow_html=True)
 
+st.markdown("</div>", unsafe_allow_html=True)
+
 # ==============================
-# PROFESSIONAL FOOTER
+# FOOTER
 # ==============================
 st.markdown("""
-<div class='footer-pro'>
+<div class='footer-section'>
     <div class='footer-links'>
-        <a href='#' class='footer-link'>📞 0541468102</a>
+        <a href='tel:0541468102' class='footer-link'>📞 0541468102</a>
+        <span style='color:#999;'>|</span>
         <a href='#' class='footer-link'>📱 Snapchat: @retroshop</a>
+        <span style='color:#999;'>|</span>
         <a href='#' class='footer-link'>📍 Accra, Ghana</a>
     </div>
-    <p style='color:#64748b; margin:20px 0 0 0; font-size:14px;'>
-        © 2026 Retro Jersey Shop • Relive the Heritage • Premium Vintage Collection
-    </p>
+    <div class='footer-copyright'>
+        © 2026 Retro Jersey Shop • All Rights Reserved
+    </div>
 </div>
 """, unsafe_allow_html=True)
