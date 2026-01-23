@@ -100,7 +100,16 @@ def get_share_url(product_name, product_price, product_image):
     }
 
 # Page Config
-st.set_page_config(page_title="Retro Jersey Shop", layout="wide", initial_sidebar_state="collapsed")
+st.set_page_config(
+    page_title="Retro Jersey Shop", 
+    layout="wide", 
+    initial_sidebar_state="collapsed"
+)
+
+# Add viewport meta tag for mobile optimization
+st.markdown("""
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+""", unsafe_allow_html=True)
 
 # Session State
 for key in ["admin_logged", "show_admin_login", "visit_tracked"]:
@@ -123,6 +132,18 @@ st.markdown("""<style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Poppins:wght@500;600;700;800;900&display=swap');
 :root {--primary:#60a5fa;--secondary:#3b82f6;--light-blue:#dbeafe;--text:#1e293b;--border:#e2e8f0;}
 html,body,.stApp{background:linear-gradient(135deg,#eff6ff 0%,#dbeafe 50%,#bfdbfe 100%);color:var(--text);font-family:'Inter',sans-serif}
+
+/* Responsive Grid System */
+@media(max-width:768px){
+    /* Force single column on mobile */
+    .row-widget.stHorizontalBlock{flex-direction:column !important}
+    .row-widget.stHorizontalBlock > div{width:100% !important;max-width:100% !important;flex:0 0 100% !important;margin-bottom:15px}
+}
+
+@media(min-width:769px) and (max-width:1024px){
+    /* Two columns on tablet */
+    .row-widget.stHorizontalBlock > div{width:48% !important;max-width:48% !important;flex:0 0 48% !important}
+}
 
 /* Performance: GPU acceleration for animations */
 .product-card,.product-image-wrapper img,.product-image-wrapper video {
@@ -178,7 +199,7 @@ html,body,.stApp{background:linear-gradient(135deg,#eff6ff 0%,#dbeafe 50%,#bfdbf
 .stat-label{font-size:13px;color:#64748b;font-weight:600;text-transform:uppercase}
 .admin-container{background:white;border:1px solid var(--border);border-radius:12px;padding:25px;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,0.08)}
 .success-message{background:linear-gradient(135deg,#d1fae5 0%,#a7f3d0 100%);border:2px solid #10b981;color:#065f46;padding:20px;border-radius:12px;margin:20px 0}
-.footer-section{background:linear-gradient(135deg,#3b82f6 0%,#60a5fa 100%);color:white;padding:40px 20px;margin-top:60px;text-align:center}
+.footer-section{background:linear-gradient(135deg,#1e40af 0%,#2563eb 100%);color:white;padding:40px 20px;margin-top:60px;text-align:center}
 .footer-link{color:white;font-size:14px;text-decoration:none;transition:all 0.3s ease}
 .footer-link:hover{color:var(--light-blue)}
 
@@ -423,6 +444,7 @@ st.markdown("<div class='ad-banner'><div class='ad-title'>🔥 FLASH SALE 🔥</
 st.markdown("<div class='section-header'>⚡ Featured Products</div>", unsafe_allow_html=True)
 
 if not products_df.empty:
+    # Responsive grid: 1 column on mobile, 2 on tablet, 3 on desktop
     cols = st.columns(3)
     for idx, row in products_df.iterrows():
         with cols[idx % 3]:
