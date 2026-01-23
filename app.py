@@ -1,6 +1,6 @@
 # ==========================================
-# RETRO JERSEY SHOP - PROFESSIONAL EDITION
-# Multi-Image Carousel + Fast Performance
+# RETRO JERSEY SHOP - PERFORMANCE + MARKETING EDITION
+# Lazy Loading, Caching, Video Compression, Share Buttons
 # ==========================================
 
 import streamlit as st
@@ -10,6 +10,7 @@ from oauth2client.service_account import ServiceAccountCredentials
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import cloudinary, cloudinary.uploader
+from urllib.parse import quote
 
 # Cloudinary Setup
 cloudinary.config(
@@ -25,12 +26,26 @@ def generate_reference(product_name, location):
 def upload_to_cloudinary(file, filename, resource_type="image"):
     try:
         file.seek(0)
+        transformations = {
+            "image": [
+                {'width': 800, 'height': 800, 'crop': 'limit'},
+                {'quality': 'auto:good'},
+                {'fetch_format': 'auto'}  # Auto WebP/AVIF for faster loading
+            ],
+            "video": [
+                {'width': 800, 'height': 800, 'crop': 'limit'},
+                {'quality': 'auto:low'},  # Compress videos more
+                {'video_codec': 'h264'},  # Better compression
+                {'bit_rate': '500k'}  # Reduce file size significantly
+            ]
+        }
+        
         result = cloudinary.uploader.upload(
             file,
             public_id=f"RetroJerseyShop/{filename.rsplit('.', 1)[0]}",
             overwrite=True,
             resource_type=resource_type,
-            transformation=[{'width': 800, 'height': 800, 'crop': 'limit'}, {'quality': 'auto:good'}]
+            transformation=transformations.get(resource_type, [])
         )
         return result.get('secure_url')
     except Exception as e:
@@ -72,6 +87,18 @@ def send_email_notification(subject, message):
         except: pass
     return False
 
+def get_share_url(product_name, product_price, product_image):
+    """Generate shareable URLs for social media"""
+    base_url = "https://retro-jersey-shop.onrender.com"  # Update with your actual URL
+    text = f"Check out {product_name} - Only GHS {product_price}!"
+    
+    return {
+        "whatsapp": f"https://wa.me/?text={quote(text + ' ' + base_url)}",
+        "facebook": f"https://www.facebook.com/sharer/sharer.php?u={quote(base_url)}",
+        "twitter": f"https://twitter.com/intent/tweet?text={quote(text)}&url={quote(base_url)}",
+        "telegram": f"https://t.me/share/url?url={quote(base_url)}&text={quote(text)}"
+    }
+
 # Page Config
 st.set_page_config(page_title="Retro Jersey Shop", layout="wide", initial_sidebar_state="collapsed")
 
@@ -91,12 +118,26 @@ header {visibility: hidden;}
 .stDeployButton {display:none;}
 </style>""", unsafe_allow_html=True)
 
-# Professional Light Blue Theme
+# Professional Light Blue Theme with Performance Optimizations
 st.markdown("""<style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Poppins:wght@500;600;700;800;900&display=swap');
-:root {--primary:#2563eb;--secondary:#1e40af;--light-blue:#dbeafe;--text:#1e293b;--border:#e2e8f0;}
-html,body,.stApp{background:linear-gradient(135deg,#e0f2fe 0%,#dbeafe 50%,#bfdbfe 100%);color:var(--text);font-family:'Inter',sans-serif}
-.compact-header{background:linear-gradient(135deg,#1e40af 0%,#2563eb 100%);padding:20px 30px;box-shadow:0 2px 10px rgba(0,0,0,0.1);position:sticky;top:0;z-index:1000}
+:root {--primary:#60a5fa;--secondary:#3b82f6;--light-blue:#dbeafe;--text:#1e293b;--border:#e2e8f0;}
+html,body,.stApp{background:linear-gradient(135deg,#eff6ff 0%,#dbeafe 50%,#bfdbfe 100%);color:var(--text);font-family:'Inter',sans-serif}
+
+/* Performance: GPU acceleration for animations */
+.product-card,.product-image-wrapper img,.product-image-wrapper video {
+    will-change: transform;
+    transform: translateZ(0);
+}
+
+/* Lazy loading optimization */
+.product-image-wrapper img,
+.product-image-wrapper video {
+    loading: lazy;
+    content-visibility: auto;
+}
+
+.compact-header{background:linear-gradient(135deg,#3b82f6 0%,#60a5fa 100%);padding:20px 30px;box-shadow:0 2px 10px rgba(0,0,0,0.1);position:sticky;top:0;z-index:1000}
 .header-content{max-width:1400px;margin:0 auto;display:flex;align-items:center;gap:20px}
 .logo-compact{width:50px;height:50px;background:white;border-radius:10px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,0.2)}
 .store-name{font-family:'Poppins',sans-serif;font-size:28px;font-weight:800;color:white;margin:0;letter-spacing:0.5px}
@@ -107,7 +148,7 @@ html,body,.stApp{background:linear-gradient(135deg,#e0f2fe 0%,#dbeafe 50%,#bfdbf
 .ad-text{font-size:14px;color:#78350f;font-weight:500;margin:0}
 .section-header{font-size:28px;font-weight:800;color:var(--secondary);margin:30px 0 20px 0;padding-bottom:10px;border-bottom:3px solid var(--primary);text-align:center}
 .product-card{background:white;border:1px solid var(--border);border-radius:12px;overflow:hidden;transition:all 0.3s ease;box-shadow:0 2px 8px rgba(0,0,0,0.08)}
-.product-card:hover{transform:translateY(-8px);box-shadow:0 12px 24px rgba(37,99,235,0.15);border-color:var(--primary)}
+.product-card:hover{transform:translateY(-8px);box-shadow:0 12px 24px rgba(96,165,250,0.2);border-color:#60a5fa}
 .product-image-wrapper{width:100%;height:280px;background:#f8fafc;display:flex;align-items:center;justify-content:center;padding:15px;position:relative}
 .product-image-wrapper img,.product-image-wrapper video{width:100%;height:100%;object-fit:contain;transition:transform 0.4s ease}
 .product-card:hover .product-image-wrapper img,.product-card:hover .product-image-wrapper video{transform:scale(1.05)}
@@ -118,19 +159,34 @@ html,body,.stApp{background:linear-gradient(135deg,#e0f2fe 0%,#dbeafe 50%,#bfdbf
 .product-info{padding:20px}
 .product-title{font-size:17px;font-weight:700;color:var(--text);margin-bottom:10px}
 .product-description{font-size:13px;color:#64748b;line-height:1.5;margin-bottom:12px}
-.product-price{font-size:28px;font-weight:900;color:var(--primary);margin-bottom:12px}
-.stButton>button{background:linear-gradient(135deg,var(--primary) 0%,var(--secondary) 100%);color:white;border:none;border-radius:8px;padding:12px 24px;font-weight:700;font-size:14px;width:100%;transition:all 0.3s ease;box-shadow:0 2px 8px rgba(37,99,235,0.3);text-transform:uppercase}
-.stButton>button:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(37,99,235,0.4)}
+.product-price{font-size:28px;font-weight:900;color:#3b82f6;margin-bottom:12px}
+
+/* Share Buttons Styling */
+.share-buttons{display:flex;gap:8px;padding:10px 0;flex-wrap:wrap;justify-content:center}
+.share-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none;color:white;transition:all 0.3s ease;box-shadow:0 2px 6px rgba(0,0,0,0.1)}
+.share-btn:hover{transform:translateY(-2px);box-shadow:0 4px 10px rgba(0,0,0,0.15)}
+.share-whatsapp{background:linear-gradient(135deg,#25D366 0%,#128C7E 100%)}
+.share-facebook{background:linear-gradient(135deg,#1877f2 0%,#0c5ec4 100%)}
+.share-twitter{background:linear-gradient(135deg,#1DA1F2 0%,#0d8bd9 100%)}
+.share-telegram{background:linear-gradient(135deg,#0088cc 0%,#006ba8 100%)}
+
+.stButton>button{background:linear-gradient(135deg,#60a5fa 0%,#3b82f6 100%);color:white;border:none;border-radius:8px;padding:12px 24px;font-weight:700;font-size:14px;width:100%;transition:all 0.3s ease;box-shadow:0 2px 8px rgba(96,165,250,0.4);text-transform:uppercase}
+.stButton>button:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(96,165,250,0.5)}
 .stButton>button:disabled{background:#94a3b8;box-shadow:none}
 .stat-card{background:white;border:1px solid var(--border);border-radius:12px;padding:20px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,0.08)}
-.stat-number{font-size:36px;font-weight:900;color:var(--primary);margin-bottom:8px}
+.stat-number{font-size:36px;font-weight:900;color:#60a5fa;margin-bottom:8px}
 .stat-label{font-size:13px;color:#64748b;font-weight:600;text-transform:uppercase}
 .admin-container{background:white;border:1px solid var(--border);border-radius:12px;padding:25px;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,0.08)}
 .success-message{background:linear-gradient(135deg,#d1fae5 0%,#a7f3d0 100%);border:2px solid #10b981;color:#065f46;padding:20px;border-radius:12px;margin:20px 0}
-.footer-section{background:linear-gradient(135deg,var(--secondary) 0%,var(--primary) 100%);color:white;padding:40px 20px;margin-top:60px;text-align:center}
+.footer-section{background:linear-gradient(135deg,#3b82f6 0%,#60a5fa 100%);color:white;padding:40px 20px;margin-top:60px;text-align:center}
 .footer-link{color:white;font-size:14px;text-decoration:none;transition:all 0.3s ease}
 .footer-link:hover{color:var(--light-blue)}
-@media(max-width:768px){.compact-header{padding:15px 20px}.logo-compact{width:40px;height:40px}.store-name{font-size:20px}.store-tagline{font-size:11px}}
+
+/* Loading skeleton for lazy loading */
+.skeleton{background:linear-gradient(90deg,#f0f0f0 25%,#e0e0e0 50%,#f0f0f0 75%);background-size:200% 100%;animation:loading 1.5s infinite}
+@keyframes loading{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+@media(max-width:768px){.compact-header{padding:15px 20px}.logo-compact{width:40px;height:40px}.store-name{font-size:20px}.store-tagline{font-size:11px}.share-buttons{gap:6px}.share-btn{padding:6px 12px;font-size:12px}}
 </style>""", unsafe_allow_html=True)
 
 # Google Sheets Auth
@@ -150,9 +206,18 @@ except:
     st.error("⚠️ Sheets not found")
     st.stop()
 
-@st.cache_data(ttl=60)
+# PERFORMANCE: Aggressive caching with longer TTL
+@st.cache_data(ttl=300, show_spinner=False)  # Cache for 5 minutes
 def load_products():
     records = products_sheet.get_all_records()
+    for i, r in enumerate(records, start=2):
+        r["_row"] = i
+    return pd.DataFrame(records)
+
+# PERFORMANCE: Cache orders separately
+@st.cache_data(ttl=60, show_spinner=False)  # Cache for 1 minute
+def load_orders():
+    records = orders_sheet.get_all_records()
     for i, r in enumerate(records, start=2):
         r["_row"] = i
     return pd.DataFrame(records)
@@ -162,7 +227,7 @@ products_df = load_products()
 # Header
 st.markdown("""<div class='compact-header'><div class='header-content'>
 <div class='logo-compact'><svg viewBox="0 0 100 100"><defs><linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%">
-<stop offset="0%" style="stop-color:#2563eb"/><stop offset="100%" style="stop-color:#1e40af"/></linearGradient></defs>
+<stop offset="0%" style="stop-color:#60a5fa"/><stop offset="100%" style="stop-color:#3b82f6"/></linearGradient></defs>
 <text x="50" y="65" font-family="Poppins" font-size="50" font-weight="900" fill="url(#g1)" text-anchor="middle">RJ</text></svg></div>
 <div><h1 class='store-name'>RETRO JERSEY SHOP</h1><p class='store-tagline'>Premium Vintage Collection</p></div>
 </div></div><div class='content-wrapper'>""", unsafe_allow_html=True)
@@ -176,6 +241,7 @@ if st.session_state.show_admin_login and not st.session_state.admin_logged:
         if password == os.environ.get("ADMIN_PASSWORD", "change_me"):
             st.session_state.admin_logged = True
             st.session_state.show_admin_login = False
+            st.cache_data.clear()  # Clear cache on login
             st.rerun()
         else:
             st.error("❌ Incorrect password")
@@ -192,9 +258,10 @@ if st.session_state.admin_logged:
     with col2:
         if st.button("🚪 Logout", use_container_width=True):
             st.session_state.admin_logged = False
+            st.cache_data.clear()
             st.rerun()
     
-    orders_df = pd.DataFrame(orders_sheet.get_all_records())
+    orders_df = load_orders()
     approved_revenue = orders_df[orders_df['status'] == 'Approved']['amount'].sum() if not orders_df.empty else 0
     
     col1, col2, col3 = st.columns(3)
@@ -210,18 +277,24 @@ if st.session_state.admin_logged:
         stock = col2.number_input("Stock *", min_value=0)
         desc = st.text_area("Description")
         images = st.file_uploader("Upload Images (Max 3)", type=["png","jpg","jpeg"], accept_multiple_files=True)
-        video = st.file_uploader("Upload Video (Optional)", type=["mp4","mov"])
+        video = st.file_uploader("Upload Video (Optional - Will be compressed)", type=["mp4","mov"])
         
         if st.form_submit_button("Add Product", use_container_width=True) and name and images:
             image_urls, video_url = [], ""
-            with st.spinner("☁️ Uploading..."):
+            with st.spinner("☁️ Uploading & optimizing..."):
                 for idx, img in enumerate(images[:3], 1):
                     url = upload_to_cloudinary(img, f"{name.replace(' ', '_')}_{idx}_{datetime.now().strftime('%Y%m%d%H%M%S')}.jpg")
-                    if url: image_urls.append(url)
-                if video: video_url = upload_to_cloudinary(video, f"{name.replace(' ', '_')}_video.mp4", "video")
+                    if url: 
+                        image_urls.append(url)
+                        st.success(f"✅ Image {idx} optimized")
+                if video: 
+                    video_url = upload_to_cloudinary(video, f"{name.replace(' ', '_')}_video.mp4", "video")
+                    if video_url:
+                        st.success("✅ Video compressed & uploaded")
             while len(image_urls) < 3: image_urls.append("")
             new_id = int(products_df["id"].max()) + 1 if not products_df.empty else 1
             products_sheet.append_row([new_id, name, price, stock, *image_urls, video_url, desc, "In Stock" if stock > 0 else "Out of Stock"])
+            st.cache_data.clear()  # Clear cache after adding
             st.success("✅ Product added!")
             st.rerun()
     st.markdown("</div>", unsafe_allow_html=True)
@@ -238,6 +311,7 @@ if st.session_state.admin_logged:
                     for col in ['image1', 'image2', 'image3', 'video']:
                         if row.get(col) and 'cloudinary.com' in str(row[col]): delete_from_cloudinary(row[col])
                     products_sheet.delete_rows(row["_row"])
+                    st.cache_data.clear()
                     st.rerun()
     st.markdown("</div>", unsafe_allow_html=True)
     
@@ -245,12 +319,71 @@ if st.session_state.admin_logged:
     st.markdown("### 📦 Orders")
     if not orders_df.empty:
         for idx, order in orders_df.iterrows():
-            with st.expander(f"📦 {order['reference']} - {order['name']} - GHS {order['amount']}"):
-                st.markdown(f"**Customer:** {order['name']}<br>**Phone:** {order['phone']}<br>**Product:** {order['items']}<br>**Amount:** GHS {order['amount']}", unsafe_allow_html=True)
-                if order['status'] == 'Pending' and st.button("✅ Approve", key=f"app_{idx}"):
-                    orders_sheet.update_cell(idx + 2, 9, "Approved")
-                    st.success("✅ Approved!")
-                    st.rerun()
+            with st.expander(f"📦 {order['reference']} - {order['name']} - GHS {order['amount']} - {order['status']}"):
+                col1, col2 = st.columns([2, 1])
+                
+                with col1:
+                    st.markdown(f"""
+                    **Customer:** {order['name']}<br>
+                    **Phone:** {order['phone']}<br>
+                    **Location:** {order['location']}<br>
+                    **Product:** {order['items']}<br>
+                    **Quantity:** {order['qty']}<br>
+                    **Amount:** GHS {order['amount']}<br>
+                    **Reference:** {order['reference']}<br>
+                    **Time:** {order['timestamp']}
+                    """, unsafe_allow_html=True)
+                
+                with col2:
+                    # WhatsApp Contact Button
+                    whatsapp_message = f"""Hi {order['name']}! 👋
+
+Thank you for your order! 🎉
+
+📦 Product: {order['items']}
+🔢 Quantity: {order['qty']}
+💰 Total: GHS {order['amount']}
+🔖 Reference: {order['reference']}
+
+✅ Your order has been received!
+We'll contact you shortly to confirm delivery to {order['location']}.
+
+For any questions, just reply to this message.
+
+- Retro Jersey Shop"""
+                    
+                    # Clean phone number (remove spaces, dashes, etc)
+                    clean_phone = ''.join(filter(str.isdigit, str(order['phone'])))
+                    # Add Ghana country code if not present
+                    if not clean_phone.startswith('233'):
+                        if clean_phone.startswith('0'):
+                            clean_phone = '233' + clean_phone[1:]
+                        else:
+                            clean_phone = '233' + clean_phone
+                    
+                    whatsapp_url = f"https://wa.me/{clean_phone}?text={quote(whatsapp_message)}"
+                    
+                    st.markdown(f"""
+                    <a href='{whatsapp_url}' target='_blank' style='display:block;margin-bottom:10px'>
+                        <button style='width:100%;background:linear-gradient(135deg,#25D366 0%,#128C7E 100%);
+                        color:white;border:none;border-radius:8px;padding:12px;font-weight:700;cursor:pointer;
+                        font-size:14px;box-shadow:0 2px 8px rgba(37,211,102,0.3)'>
+                            📱 Contact via WhatsApp
+                        </button>
+                    </a>
+                    """, unsafe_allow_html=True)
+                    
+                    # Approve Order Button
+                    if order['status'] == 'Pending':
+                        if st.button("✅ Approve Order", key=f"app_{idx}", use_container_width=True):
+                            orders_sheet.update_cell(idx + 2, 9, "Approved")
+                            st.cache_data.clear()
+                            st.success("✅ Approved!")
+                            st.rerun()
+                    else:
+                        st.success("✅ Approved")
+    else:
+        st.info("No orders yet")
     st.markdown("</div>", unsafe_allow_html=True)
     st.stop()
 
@@ -268,7 +401,7 @@ if not products_df.empty:
     cols = st.columns(3)
     for idx, row in products_df.iterrows():
         with cols[idx % 3]:
-            # Multi-image carousel
+            # Multi-image carousel with lazy loading
             images = [row.get(f"image{i}", "") for i in range(1, 4) if row.get(f"image{i}")]
             video = row.get("video", "")
             
@@ -277,10 +410,11 @@ if not products_df.empty:
             
             badge = "badge-in-stock" if row["status"] == "In Stock" else "badge-out-stock"
             
+            # PERFORMANCE: Lazy loading with loading attribute
             if video and 'cloudinary.com' in str(video):
-                media_html = f"<video src='{video}' autoplay loop muted playsinline style='width:100%;height:100%;object-fit:contain'></video>"
+                media_html = f"<video src='{video}' autoplay loop muted playsinline loading='lazy' style='width:100%;height:100%;object-fit:contain'></video>"
             else:
-                media_html = f"<img src='{images[st.session_state[carousel_key]]}' alt='{row['name']}'>" if images else ""
+                media_html = f"<img src='{images[st.session_state[carousel_key]]}' alt='{row['name']}' loading='lazy'>" if images else ""
             
             st.markdown(f"""<div class='product-card'><div class='product-image-wrapper'>{media_html}
             <div class='stock-badge {badge}'>{row["status"]}</div></div>""", unsafe_allow_html=True)
@@ -299,7 +433,17 @@ if not products_df.empty:
                         st.rerun()
             
             st.markdown(f"""<div class='product-info'><div class='product-title'>{row['name']}</div>
-            <div class='product-description'>{row.get('description', '')}</div><div class='product-price'>GHS {row['price']}</div></div></div>""", unsafe_allow_html=True)
+            <div class='product-description'>{row.get('description', '')}</div><div class='product-price'>GHS {row['price']}</div>""", unsafe_allow_html=True)
+            
+            # MARKETING: Social Share Buttons
+            share_urls = get_share_url(row['name'], row['price'], images[0] if images else "")
+            st.markdown(f"""
+            <div class='share-buttons'>
+                <a href='{share_urls["whatsapp"]}' target='_blank' class='share-btn share-whatsapp'>📱 Share</a>
+                <a href='{share_urls["facebook"]}' target='_blank' class='share-btn share-facebook'>👍 Share</a>
+                <a href='{share_urls["twitter"]}' target='_blank' class='share-btn share-twitter'>🐦 Tweet</a>
+            </div>
+            </div></div>""", unsafe_allow_html=True)
             
             if row["status"] == "Out of Stock":
                 st.button("Unavailable", key=f"out_{row['id']}", disabled=True, use_container_width=True)
@@ -326,10 +470,11 @@ if "selected" in st.session_state:
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             orders_sheet.append_row([name, phone, location, p["name"], qty, total, ref, timestamp, "Pending"])
             
-            msg = f"🛒 <b>NEW ORDER!</b>\n📦 {p['name']}\n👤 {name}\n📱 {phone}\n💰 GHS {total}\n🔖 {ref}"
+            msg = f"🛒 <b>NEW ORDER!</b>\n📦 {p['name']}\n👤 {name}\n📱 {phone}\n📍 {location}\n💰 GHS {total}\n🔖 {ref}"
             send_telegram_notification(msg)
-            send_email_notification(f"New Order: {ref}", f"<h2>Product: {p['name']}</h2><p>Customer: {name}<br>Total: GHS {total}</p>")
+            send_email_notification(f"New Order: {ref}", f"<h2>Product: {p['name']}</h2><p>Customer: {name}<br>Phone: {phone}<br>Location: {location}<br>Total: GHS {total}</p>")
             
+            st.cache_data.clear()  # Clear cache after order
             st.markdown(f"<div class='success-message'><h3>✅ Order Placed!</h3><p>Total: GHS {total}</p><p>Ref: {ref}</p></div>", unsafe_allow_html=True)
             del st.session_state.selected
     st.markdown("</div>", unsafe_allow_html=True)
