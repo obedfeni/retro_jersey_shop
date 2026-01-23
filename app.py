@@ -305,7 +305,11 @@ if st.session_state.admin_logged:
         cols = st.columns(3)
         for idx, row in products_df.iterrows():
             with cols[idx % 3]:
-                st.image(row["image1"], use_column_width=True)
+                # Only show image if URL exists and is valid
+                if row.get("image1") and str(row["image1"]).strip():
+                    st.image(row["image1"], width=None, use_container_width=True)
+                else:
+                    st.info("No image")
                 st.markdown(f"**{row['name']}** | GHS {row['price']}")
                 if st.button("Delete", key=f"del_{row['id']}", use_container_width=True):
                     for col in ['image1', 'image2', 'image3', 'video']:
@@ -373,6 +377,27 @@ For any questions, just reply to this message.
                     </a>
                     """, unsafe_allow_html=True)
                     
+                    # Share Buttons for Admin
+                    share_urls = get_share_url(order['items'], order['amount'], "")
+                    st.markdown(f"""
+                    <div style='margin-bottom:10px'>
+                        <a href='{share_urls["whatsapp"]}' target='_blank' style='display:inline-block;width:48%;margin-right:2%'>
+                            <button style='width:100%;background:linear-gradient(135deg,#25D366 0%,#128C7E 100%);
+                            color:white;border:none;border-radius:6px;padding:8px;font-weight:600;cursor:pointer;
+                            font-size:12px;box-shadow:0 2px 6px rgba(37,211,102,0.3)'>
+                                📱 Share
+                            </button>
+                        </a>
+                        <a href='{share_urls["facebook"]}' target='_blank' style='display:inline-block;width:48%'>
+                            <button style='width:100%;background:linear-gradient(135deg,#1877f2 0%,#0c5ec4 100%);
+                            color:white;border:none;border-radius:6px;padding:8px;font-weight:600;cursor:pointer;
+                            font-size:12px;box-shadow:0 2px 6px rgba(24,119,242,0.3)'>
+                                👍 Share
+                            </button>
+                        </a>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
                     # Approve Order Button
                     if order['status'] == 'Pending':
                         if st.button("✅ Approve Order", key=f"app_{idx}", use_container_width=True):
@@ -433,16 +458,7 @@ if not products_df.empty:
                         st.rerun()
             
             st.markdown(f"""<div class='product-info'><div class='product-title'>{row['name']}</div>
-            <div class='product-description'>{row.get('description', '')}</div><div class='product-price'>GHS {row['price']}</div>""", unsafe_allow_html=True)
-            
-            # MARKETING: Social Share Buttons
-            share_urls = get_share_url(row['name'], row['price'], images[0] if images else "")
-            st.markdown(f"""
-            <div class='share-buttons'>
-                <a href='{share_urls["whatsapp"]}' target='_blank' class='share-btn share-whatsapp'>📱 Share</a>
-                <a href='{share_urls["facebook"]}' target='_blank' class='share-btn share-facebook'>👍 Share</a>
-                <a href='{share_urls["twitter"]}' target='_blank' class='share-btn share-twitter'>🐦 Tweet</a>
-            </div>
+            <div class='product-description'>{row.get('description', '')}</div><div class='product-price'>GHS {row['price']}</div>
             </div></div>""", unsafe_allow_html=True)
             
             if row["status"] == "Out of Stock":
