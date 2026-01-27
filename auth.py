@@ -1,10 +1,20 @@
-import streamlit as st
+[theme]
+primaryColor = "#667eea"
+backgroundColor = "#f0f4ff"
+secondaryBackgroundColor = "#ffffff"
+textColor = "#2d3748"
+font = "sans serif"
 
-def require_admin(email_input):
-    admin_email = "obedfeni23@gmail.com"  # your admin email
-    if email_input == admin_email:
-        st.session_state["admin_logged_in"] = True
-        return True
-    else:
-        st.error("❌ Not authorized")
-        return False
+[server]
+headless = true
+enableCORS = false
+enableXsrfProtection = true
+
+[browser]
+gatherUsageStats = false
+serverAddress = "retrogh.shop"
+serverPort = 443
+
+[client]
+showErrorDetails = false
+toolbarMode = "minimal"
