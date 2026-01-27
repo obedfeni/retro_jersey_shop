@@ -1,6 +1,5 @@
-# ========================================== 
-# RETRO JERSEY SHOP - PERFORMANCE + MARKETING EDITION 
-# Lazy Loading, Caching, Video Compression, Share Buttons 
+ 
+# RETRO JERSEY SHOP 
 # ========================================== 
 import streamlit as st
 import gspread, pandas as pd, os, json, random, requests, smtplib
@@ -134,7 +133,7 @@ st.markdown("""<style>
     header {visibility: hidden;}
 </style>""", unsafe_allow_html=True)
 
-# Professional Light Blue Theme with BETTER Mobile Responsiveness
+# Professional Light Blue Theme with BETTER Mobile Responsiveness + DARK MODE FIXES
 st.markdown("""<style>
         * {
             margin: 0;
@@ -282,31 +281,36 @@ st.markdown("""<style>
             }
         }
         
-        /* Loading Spinner */
-        .spinner {
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #667eea;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 20px auto;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        .loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
+        /* THREE DOT LOADING ANIMATION */
+        .loading-dots {
             display: flex;
-            align-items: center;
             justify-content: center;
-            z-index: 9999;
+            align-items: center;
+            gap: 8px;
+            padding: 20px;
+        }
+        .loading-dots span {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #667eea;
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+        .loading-dots span:nth-child(1) {
+            animation-delay: -0.32s;
+        }
+        .loading-dots span:nth-child(2) {
+            animation-delay: -0.16s;
+        }
+        @keyframes bounce {
+            0%, 80%, 100% { 
+                transform: scale(0);
+                opacity: 0.5;
+            } 
+            40% { 
+                transform: scale(1);
+                opacity: 1;
+            }
         }
         
         /* Badges */
@@ -452,6 +456,44 @@ st.markdown("""<style>
             font-weight: 500;
         }
         
+        /* DARK MODE FIX - Force input fields to have visible text */
+        input[type="text"],
+        input[type="number"],
+        input[type="password"],
+        textarea,
+        .stTextInput input,
+        .stNumberInput input,
+        .stTextArea textarea {
+            background-color: white !important;
+            color: #2d3748 !important;
+            border: 2px solid #e2e8f0 !important;
+            border-radius: 8px !important;
+            padding: 0.75rem !important;
+            font-size: 1rem !important;
+        }
+        
+        /* Dark mode input focus states */
+        input[type="text"]:focus,
+        input[type="number"]:focus,
+        input[type="password"]:focus,
+        textarea:focus,
+        .stTextInput input:focus,
+        .stNumberInput input:focus,
+        .stTextArea textarea:focus {
+            border-color: #667eea !important;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1) !important;
+            outline: none !important;
+        }
+        
+        /* Input labels - make them visible in dark mode */
+        label, .stTextInput label, .stNumberInput label, .stTextArea label {
+            color: #2d3748 !important;
+            font-weight: 600 !important;
+            margin-bottom: 0.5rem !important;
+            display: block !important;
+            font-size: 0.95rem !important;
+        }
+        
         /* Responsive adjustments */
         @media (max-width: 768px) {
             .product-image {
@@ -554,21 +596,33 @@ if st.session_state.admin_logged:
         images = st.file_uploader("Upload Images (Max 3)", type=["png","jpg","jpeg"], accept_multiple_files=True)
         video = st.file_uploader("Upload Video (Optional - Will be compressed)", type=["mp4","mov"])
         if st.form_submit_button("Add Product", use_container_width=True) and name and images:
+            # Show loading animation
+            loading_placeholder = st.empty()
+            loading_placeholder.markdown("""
+                <div class='loading-dots'>
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            """, unsafe_allow_html=True)
+            
             image_urls, video_url = [], ""
-            with st.spinner("☁️ Uploading & optimizing..."):
-                for idx, img in enumerate(images[:3], 1):
-                    url = upload_to_cloudinary(img, f"{name.replace(' ', '_')}_{idx}_{datetime.now().strftime('%Y%m%d%H%M%S')}.jpg")
-                    if url:
-                        image_urls.append(url)
-                        st.success(f"✅ Image {idx} optimized")
-                if video:
-                    video_url = upload_to_cloudinary(video, f"{name.replace(' ', '_')}_video.mp4", "video")
-                    if video_url:
-                        st.success("✅ Video compressed & uploaded")
+            for idx, img in enumerate(images[:3], 1):
+                url = upload_to_cloudinary(img, f"{name.replace(' ', '_')}_{idx}_{datetime.now().strftime('%Y%m%d%H%M%S')}.jpg")
+                if url:
+                    image_urls.append(url)
+                    st.success(f"✅ Image {idx} optimized")
+            if video:
+                video_url = upload_to_cloudinary(video, f"{name.replace(' ', '_')}_video.mp4", "video")
+                if video_url:
+                    st.success("✅ Video compressed & uploaded")
+            
             while len(image_urls) < 3:
                 image_urls.append("")
             new_id = int(products_df["id"].max()) + 1 if not products_df.empty else 1
             products_sheet.append_row([new_id, name, price, stock, *image_urls, video_url, desc, "In Stock" if stock > 0 else "Out of Stock"])
+            
+            loading_placeholder.empty()
             st.cache_data.clear()
             st.success("✅ Product added!")
             st.rerun()
@@ -721,11 +775,10 @@ if not products_df.empty:
                 st.button("Unavailable", key=f"out_{row['id']}", disabled=True, use_container_width=True)
             else:
                 if st.button("🛒 Add to Cart", key=f"order_{row['id']}", use_container_width=True):
-                    with st.spinner("Loading checkout..."):
-                        st.session_state.selected = row
-                        st.rerun()
+                    st.session_state.selected = row
+                    st.rerun()
 
-# Order Form
+# Order Form - FASTER PROCESSING + NO CLIENT EMAIL
 if "selected" in st.session_state:
     p = st.session_state.selected
     st.markdown("<div class='admin-card'>", unsafe_allow_html=True)
@@ -739,78 +792,103 @@ if "selected" in st.session_state:
         total = int(p["price"]) * int(qty)
         st.markdown(f"<div class='product-price'>Total: GHS {total}</div>", unsafe_allow_html=True)
         if st.form_submit_button("🚀 Place Order", use_container_width=True) and name and phone and location:
-            with st.spinner("🚀 Processing your order..."):
-                ref = generate_reference(p["name"], location)
-                timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                orders_sheet.append_row([name, phone, location, p["name"], qty, total, ref, timestamp, "Pending"])
-                
-                email_body = f"""
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <style>
-                        body {{ font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px; }}
-                        .container {{ background: white; padding: 30px; border-radius: 10px; max-width: 600px; margin: 0 auto; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }}
-                        .header {{ background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 10px 10px 0 0; text-align: center; }}
-                        .content {{ padding: 20px; }}
-                        .order-detail {{ margin: 10px 0; padding: 10px; background: #f8f9fa; border-left: 4px solid #667eea; }}
-                        .label {{ font-weight: bold; color: #667eea; }}
-                        .total {{ font-size: 24px; color: #28a745; font-weight: bold; margin-top: 20px; }}
-                        .footer {{ text-align: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid #dee2e6; color: #6c757d; }}
-                    </style>
-                </head>
-                <body>
-                    <div class='container'>
-                        <div class='header'>
-                            <h1>🛒 NEW ORDER RECEIVED!</h1>
+            # Show loading animation
+            loading_placeholder = st.empty()
+            loading_placeholder.markdown("""
+                <div class='loading-dots'>
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            """, unsafe_allow_html=True)
+            
+            # Generate reference and timestamp
+            ref = generate_reference(p["name"], location)
+            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            
+            # Save to Google Sheets (main priority)
+            orders_sheet.append_row([name, phone, location, p["name"], qty, total, ref, timestamp, "Pending"])
+            
+            # Send admin notifications in the background (non-blocking)
+            email_body = f"""
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <style>
+                    body {{ font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px; }}
+                    .container {{ background: white; padding: 30px; border-radius: 10px; max-width: 600px; margin: 0 auto; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }}
+                    .header {{ background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 10px 10px 0 0; text-align: center; }}
+                    .content {{ padding: 20px; }}
+                    .order-detail {{ margin: 10px 0; padding: 10px; background: #f8f9fa; border-left: 4px solid #667eea; }}
+                    .label {{ font-weight: bold; color: #667eea; }}
+                    .total {{ font-size: 24px; color: #28a745; font-weight: bold; margin-top: 20px; }}
+                    .footer {{ text-align: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid #dee2e6; color: #6c757d; }}
+                </style>
+            </head>
+            <body>
+                <div class='container'>
+                    <div class='header'>
+                        <h1>🛒 NEW ORDER RECEIVED!</h1>
+                    </div>
+                    <div class='content'>
+                        <div class='order-detail'>
+                            <span class='label'>📦 Product:</span> {p['name']}
                         </div>
-                        <div class='content'>
-                            <div class='order-detail'>
-                                <span class='label'>📦 Product:</span> {p['name']}
-                            </div>
-                            <div class='order-detail'>
-                                <span class='label'>👤 Customer:</span> {name}
-                            </div>
-                            <div class='order-detail'>
-                                <span class='label'>📱 Phone:</span> <a href='tel:{phone}'>{phone}</a>
-                            </div>
-                            <div class='order-detail'>
-                                <span class='label'>📍 Location:</span> {location}
-                            </div>
-                            <div class='order-detail'>
-                                <span class='label'>🔢 Quantity:</span> {qty}
-                            </div>
-                            <div class='order-detail'>
-                                <span class='label'>🔖 Reference:</span> {ref}
-                            </div>
-                            <div class='order-detail'>
-                                <span class='label'>🕐 Time:</span> {timestamp}
-                            </div>
-                            <div class='total'>
-                                💰 Total: GHS {total}
-                            </div>
+                        <div class='order-detail'>
+                            <span class='label'>👤 Customer:</span> {name}
                         </div>
-                        <div class='footer'>
-                            <p>Log in to your admin dashboard to manage this order</p>
-                            <p><small>Retro Jersey Shop © 2026</small></p>
+                        <div class='order-detail'>
+                            <span class='label'>📱 Phone:</span> <a href='tel:{phone}'>{phone}</a>
+                        </div>
+                        <div class='order-detail'>
+                            <span class='label'>📍 Location:</span> {location}
+                        </div>
+                        <div class='order-detail'>
+                            <span class='label'>🔢 Quantity:</span> {qty}
+                        </div>
+                        <div class='order-detail'>
+                            <span class='label'>🔖 Reference:</span> {ref}
+                        </div>
+                        <div class='order-detail'>
+                            <span class='label'>🕐 Time:</span> {timestamp}
+                        </div>
+                        <div class='total'>
+                            💰 Total: GHS {total}
                         </div>
                     </div>
-                </body>
-                </html>
-                """
-                
-                msg = f"🛒 NEW ORDER!\n📦 {p['name']}\n👤 {name}\n📱 {phone}\n📍 {location}\n💰 GHS {total}\n🔖 {ref}"
-                send_telegram_notification(msg)
-                
-                email_sent = send_email_notification(f"🛒 New Order: {ref}", email_body)
-                
-                st.cache_data.clear()
-                st.markdown(f"<div class='order-success'>✅ Order Placed!<br>Total: GHS {total}<br>Ref: {ref}</div>", unsafe_allow_html=True)
-                
-                if not email_sent:
-                    st.warning("⚠️ Order placed but email notification failed. Please check your email settings.")
-                
-                del st.session_state.selected
+                    <div class='footer'>
+                        <p>Log in to your admin dashboard to manage this order</p>
+                        <p><small>Retro Jersey Shop © 2026</small></p>
+                    </div>
+                </div>
+            </body>
+            </html>
+            """
+            
+            # Send notifications (non-blocking - don't wait for response)
+            telegram_msg = f"🛒 NEW ORDER!\n📦 {p['name']}\n👤 {name}\n📱 {phone}\n📍 {location}\n💰 GHS {total}\n🔖 {ref}"
+            try:
+                send_telegram_notification(telegram_msg)
+                send_email_notification(f"🛒 New Order: {ref}", email_body)
+            except:
+                pass  # Silently fail - don't block user experience
+            
+            # Clear cache and show success immediately
+            loading_placeholder.empty()
+            st.cache_data.clear()
+            
+            st.markdown(f"<div class='order-success'>✅ Order Placed Successfully!<br><br>📦 Product: {p['name']}<br>💰 Total: GHS {total}<br>🔖 Reference: {ref}<br><br>We'll contact you shortly at {phone} to confirm your order!</div>", unsafe_allow_html=True)
+            
+            del st.session_state.selected
+            
+            # Auto-redirect after 3 seconds
+            st.markdown("""
+                <script>
+                setTimeout(function() {
+                    window.location.href = window.location.href.split('?')[0];
+                }, 3000);
+                </script>
+            """, unsafe_allow_html=True)
     st.markdown("</div>", unsafe_allow_html=True)
 
 # IMPROVED FOOTER - CLEAR AND READABLE
