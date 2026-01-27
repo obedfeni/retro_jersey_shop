@@ -1,6 +1,6 @@
- 
+
 # RETRO JERSEY SHOP 
-# ========================================== 
+
 import streamlit as st
 import gspread, pandas as pd, os, json, random, requests, smtplib
 from datetime import datetime
@@ -9,6 +9,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import cloudinary, cloudinary.uploader
 from urllib.parse import quote
+import threading
 
 # Cloudinary Setup
 cloudinary.config(
@@ -28,13 +29,13 @@ def upload_to_cloudinary(file, filename, resource_type="image"):
             "image": [
                 {'width': 800, 'height': 800, 'crop': 'limit'},
                 {'quality': 'auto:good'},
-                {'fetch_format': 'auto'} # Auto WebP/AVIF for faster loading
+                {'fetch_format': 'auto'}
             ],
             "video": [
                 {'width': 800, 'height': 800, 'crop': 'limit'},
-                {'quality': 'auto:low'}, # Compress videos more
-                {'video_codec': 'h264'}, # Better compression
-                {'bit_rate': '500k'} # Reduce file size significantly
+                {'quality': 'auto:low'},
+                {'video_codec': 'h264'},
+                {'bit_rate': '500k'}
             ]
         }
         result = cloudinary.uploader.upload(
@@ -60,44 +61,47 @@ def delete_from_cloudinary(media_url):
         pass
     return False
 
-def send_telegram_notification(message):
-    token, chat_id = os.environ.get("TELEGRAM_BOT_TOKEN"), os.environ.get("TELEGRAM_CHAT_ID")
-    if token and chat_id:
+# ASYNC NOTIFICATION FUNCTIONS - Don't block the main thread
+def send_notifications_async(telegram_msg, email_subject, email_body):
+    """Send notifications in background thread - never blocks UI"""
+    def _send():
         try:
-            return requests.post(f"https://api.telegram.org/bot{token}/sendMessage", data={"chat_id": chat_id, "text": message, "parse_mode": "HTML"}, timeout=10).status_code == 200
+            # Telegram
+            token = os.environ.get("TELEGRAM_BOT_TOKEN")
+            chat_id = os.environ.get("TELEGRAM_CHAT_ID")
+            if token and chat_id:
+                requests.post(
+                    f"https://api.telegram.org/bot{token}/sendMessage",
+                    data={"chat_id": chat_id, "text": telegram_msg, "parse_mode": "HTML"},
+                    timeout=5
+                )
+            
+            # Email
+            admin_email = os.environ.get("ADMIN_EMAIL")
+            password = os.environ.get("EMAIL_APP_PASSWORD")
+            if admin_email and password:
+                msg = MIMEMultipart('alternative')
+                msg['From'] = admin_email
+                msg['To'] = admin_email
+                msg['Subject'] = email_subject
+                msg.attach(MIMEText(email_body, 'html'))
+                
+                server = smtplib.SMTP('smtp.gmail.com', 587)
+                server.set_debuglevel(0)
+                server.starttls()
+                server.login(admin_email, password)
+                server.send_message(msg)
+                server.quit()
         except:
-            pass
-    return False
-
-def send_email_notification(subject, message):
-    admin_email, password = os.environ.get("ADMIN_EMAIL"), os.environ.get("EMAIL_APP_PASSWORD")
-    if admin_email and password:
-        try:
-            msg = MIMEMultipart('alternative')
-            msg['From'] = admin_email
-            msg['To'] = admin_email
-            msg['Subject'] = subject
-            
-            # HTML version
-            html_part = MIMEText(message, 'html')
-            msg.attach(html_part)
-            
-            # Connect and send
-            server = smtplib.SMTP('smtp.gmail.com', 587)
-            server.set_debuglevel(0)  # Set to 1 to debug
-            server.starttls()
-            server.login(admin_email, password)
-            server.send_message(msg)
-            server.quit()
-            return True
-        except Exception as e:
-            print(f"❌ Email error: {e}")
-            return False
-    return False
+            pass  # Fail silently in background
+    
+    # Start thread and return immediately
+    thread = threading.Thread(target=_send, daemon=True)
+    thread.start()
 
 def get_share_url(product_name, product_price, product_image):
     """Generate shareable URLs for social media"""
-    base_url = "https://retro-jersey-shop.onrender.com" # Update with your actual URL
+    base_url = "https://retrogh.shop"
     text = f"Check out {product_name} - Only GHS {product_price}!"
     return {
         "whatsapp": f"https://wa.me/?text={quote(text + ' ' + base_url)}",
@@ -106,20 +110,41 @@ def get_share_url(product_name, product_price, product_image):
         "telegram": f"https://t.me/share/url?url={quote(base_url)}&text={quote(text)}"
     }
 
-# Page Config
+# Page Config with SEO
 st.set_page_config(
-    page_title="Retro Jersey Shop",
+    page_title="Retro Jersey Shop - Premium Vintage Football Jerseys in Ghana",
+    page_icon="⚽",
     layout="wide",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="collapsed",
+    menu_items={
+        'Get Help': None,
+        'Report a bug': None,
+        'About': "Retro Jersey Shop - Your #1 destination for premium vintage football jerseys in Ghana 🇬🇭"
+    }
 )
 
-# Add viewport meta tag for mobile optimization
+# SEO Meta Tags & Favicon
 st.markdown("""
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <meta name="description" content="Retro Jersey Shop - Buy authentic vintage football jerseys in Ghana. Premium quality retro jerseys from top clubs. Fast delivery in Accra and across Ghana. Shop now!">
+    <meta name="keywords" content="retro jerseys ghana, vintage football shirts, classic jerseys accra, football jerseys ghana, retro soccer jerseys, vintage sports wear ghana">
+    <meta name="author" content="Retro Jersey Shop">
+    <meta property="og:title" content="Retro Jersey Shop - Premium Vintage Football Jerseys">
+    <meta property="og:description" content="Your #1 destination for authentic vintage football jerseys in Ghana. Premium quality, fast delivery.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://retrogh.shop">
+    <meta property="og:site_name" content="Retro Jersey Shop">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Retro Jersey Shop Ghana">
+    <meta name="twitter:description" content="Premium vintage football jerseys in Ghana. Shop authentic retro jerseys now!">
+    <link rel="canonical" href="https://retrogh.shop">
+    
+    <!-- Favicon as emoji -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚽</text></svg>">
 """, unsafe_allow_html=True)
 
 # Session State
-for key in ["admin_logged", "show_admin_login", "visit_tracked"]:
+for key in ["admin_logged", "show_admin_login", "visit_tracked", "loading"]:
     if key not in st.session_state:
         st.session_state[key] = False
 
@@ -133,7 +158,7 @@ st.markdown("""<style>
     header {visibility: hidden;}
 </style>""", unsafe_allow_html=True)
 
-# Professional Light Blue Theme with BETTER Mobile Responsiveness + DARK MODE FIXES
+# Professional Theme + Loading Animation
 st.markdown("""<style>
         * {
             margin: 0;
@@ -144,7 +169,60 @@ st.markdown("""<style>
             background: linear-gradient(to bottom, #f0f4ff, #e6f0ff);
         }
         
-        /* FIXED MOBILE HEADER */
+        /* LOADING OVERLAY - GLOBAL */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            backdrop-filter: blur(5px);
+        }
+        
+        .loading-dots {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+            padding: 20px;
+        }
+        .loading-dots span {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #667eea;
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+        .loading-dots span:nth-child(1) {
+            animation-delay: -0.32s;
+        }
+        .loading-dots span:nth-child(2) {
+            animation-delay: -0.16s;
+        }
+        @keyframes bounce {
+            0%, 80%, 100% { 
+                transform: scale(0);
+                opacity: 0.5;
+            } 
+            40% { 
+                transform: scale(1.2);
+                opacity: 1;
+            }
+        }
+        .loading-text {
+            margin-top: 20px;
+            font-size: 1.2rem;
+            color: #667eea;
+            font-weight: 600;
+        }
+        
+        /* HEADER */
         .header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             padding: 0.8rem;
@@ -183,7 +261,6 @@ st.markdown("""<style>
             margin-top: 2px;
         }
         
-        /* Tablet and larger */
         @media (min-width: 768px) {
             .header {
                 padding: 1.2rem;
@@ -203,7 +280,6 @@ st.markdown("""<style>
             }
         }
         
-        /* Desktop */
         @media (min-width: 1024px) {
             .logo {
                 width: 60px;
@@ -256,64 +332,6 @@ st.markdown("""<style>
             margin-bottom: 1rem;
         }
         
-        /* FIXED CAROUSEL ARROWS FOR MOBILE */
-        .carousel-btn {
-            background: rgba(102, 126, 234, 0.9) !important;
-            color: white !important;
-            border: none !important;
-            border-radius: 8px !important;
-            padding: 6px 10px !important;
-            font-size: 0.85rem !important;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            min-height: 35px !important;
-        }
-        .carousel-btn:hover {
-            background: rgba(102, 126, 234, 1) !important;
-            transform: scale(1.05);
-        }
-        
-        @media (min-width: 768px) {
-            .carousel-btn {
-                padding: 8px 14px !important;
-                font-size: 1rem !important;
-                min-height: 38px !important;
-            }
-        }
-        
-        /* THREE DOT LOADING ANIMATION */
-        .loading-dots {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 8px;
-            padding: 20px;
-        }
-        .loading-dots span {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            background: #667eea;
-            animation: bounce 1.4s infinite ease-in-out both;
-        }
-        .loading-dots span:nth-child(1) {
-            animation-delay: -0.32s;
-        }
-        .loading-dots span:nth-child(2) {
-            animation-delay: -0.16s;
-        }
-        @keyframes bounce {
-            0%, 80%, 100% { 
-                transform: scale(0);
-                opacity: 0.5;
-            } 
-            40% { 
-                transform: scale(1);
-                opacity: 1;
-            }
-        }
-        
-        /* Badges */
         .badge {
             position: absolute;
             top: 10px;
@@ -402,7 +420,6 @@ st.markdown("""<style>
             box-shadow: 0 10px 30px rgba(72, 187, 120, 0.3);
         }
         
-        /* IMPROVED FOOTER FOR MOBILE */
         .footer {
             background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
             color: white;
@@ -456,7 +473,7 @@ st.markdown("""<style>
             font-weight: 500;
         }
         
-        /* DARK MODE FIX - Force input fields to have visible text */
+        /* DARK MODE FIX */
         input[type="text"],
         input[type="number"],
         input[type="password"],
@@ -472,7 +489,6 @@ st.markdown("""<style>
             font-size: 1rem !important;
         }
         
-        /* Dark mode input focus states */
         input[type="text"]:focus,
         input[type="number"]:focus,
         input[type="password"]:focus,
@@ -485,7 +501,6 @@ st.markdown("""<style>
             outline: none !important;
         }
         
-        /* Input labels - make them visible in dark mode */
         label, .stTextInput label, .stNumberInput label, .stTextArea label {
             color: #2d3748 !important;
             font-weight: 600 !important;
@@ -494,7 +509,6 @@ st.markdown("""<style>
             font-size: 0.95rem !important;
         }
         
-        /* Responsive adjustments */
         @media (max-width: 768px) {
             .product-image {
                 height: 200px;
@@ -502,16 +516,24 @@ st.markdown("""<style>
         }
 </style>""", unsafe_allow_html=True)
 
-# Google Sheets Auth
-scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
-try:
-    creds = ServiceAccountCredentials.from_json_keyfile_dict(json.loads(os.environ.get("GCP_SERVICE_ACCOUNT")), scope)
-    client = gspread.authorize(creds)
-except:
-    st.error("⚠️ Connection error")
-    st.stop()
+# Google Sheets Auth with caching
+@st.cache_resource(ttl=3600)  # Cache for 1 hour
+def get_sheets_client():
+    scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
+    try:
+        creds = ServiceAccountCredentials.from_json_keyfile_dict(
+            json.loads(os.environ.get("GCP_SERVICE_ACCOUNT")), 
+            scope
+        )
+        client = gspread.authorize(creds)
+        return client
+    except:
+        st.error("⚠️ Connection error")
+        st.stop()
 
+client = get_sheets_client()
 SHEET_NAME = "retro_jersey_shop"
+
 try:
     products_sheet = client.open(SHEET_NAME).worksheet("products")
     orders_sheet = client.open(SHEET_NAME).worksheet("orders")
@@ -519,25 +541,31 @@ except:
     st.error("⚠️ Sheets not found")
     st.stop()
 
-# PERFORMANCE: Aggressive caching with longer TTL
-@st.cache_data(ttl=300, show_spinner=False) # Cache for 5 minutes
+# ULTRA AGGRESSIVE CACHING - 10 minutes for products
+@st.cache_data(ttl=600, show_spinner=False)
 def load_products():
     records = products_sheet.get_all_records()
     for i, r in enumerate(records, start=2):
         r["_row"] = i
     return pd.DataFrame(records)
 
-# PERFORMANCE: Cache orders separately
-@st.cache_data(ttl=60, show_spinner=False) # Cache for 1 minute
+# Cache orders for 2 minutes
+@st.cache_data(ttl=120, show_spinner=False)
 def load_orders():
     records = orders_sheet.get_all_records()
     for i, r in enumerate(records, start=2):
         r["_row"] = i
     return pd.DataFrame(records)
 
-products_df = load_products()
+# Load products ONCE at start
+if "products_loaded" not in st.session_state:
+    with st.spinner(""):
+        products_df = load_products()
+        st.session_state.products_loaded = True
+else:
+    products_df = load_products()
 
-# Header - FIXED FOR MOBILE
+# Header
 st.markdown("""
 <div class='header'>
     <div class='logo'>RJ</div>
@@ -596,13 +624,16 @@ if st.session_state.admin_logged:
         images = st.file_uploader("Upload Images (Max 3)", type=["png","jpg","jpeg"], accept_multiple_files=True)
         video = st.file_uploader("Upload Video (Optional - Will be compressed)", type=["mp4","mov"])
         if st.form_submit_button("Add Product", use_container_width=True) and name and images:
-            # Show loading animation
-            loading_placeholder = st.empty()
-            loading_placeholder.markdown("""
-                <div class='loading-dots'>
-                    <span></span>
-                    <span></span>
-                    <span></span>
+            # Show loading
+            loading_container = st.empty()
+            loading_container.markdown("""
+                <div class='loading-overlay'>
+                    <div class='loading-dots'>
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                    <div class='loading-text'>Uploading & Optimizing...</div>
                 </div>
             """, unsafe_allow_html=True)
             
@@ -611,18 +642,15 @@ if st.session_state.admin_logged:
                 url = upload_to_cloudinary(img, f"{name.replace(' ', '_')}_{idx}_{datetime.now().strftime('%Y%m%d%H%M%S')}.jpg")
                 if url:
                     image_urls.append(url)
-                    st.success(f"✅ Image {idx} optimized")
             if video:
                 video_url = upload_to_cloudinary(video, f"{name.replace(' ', '_')}_video.mp4", "video")
-                if video_url:
-                    st.success("✅ Video compressed & uploaded")
             
             while len(image_urls) < 3:
                 image_urls.append("")
             new_id = int(products_df["id"].max()) + 1 if not products_df.empty else 1
             products_sheet.append_row([new_id, name, price, stock, *image_urls, video_url, desc, "In Stock" if stock > 0 else "Out of Stock"])
             
-            loading_placeholder.empty()
+            loading_container.empty()
             st.cache_data.clear()
             st.success("✅ Product added!")
             st.rerun()
@@ -778,12 +806,13 @@ if not products_df.empty:
                     st.session_state.selected = row
                     st.rerun()
 
-# Order Form - FASTER PROCESSING + NO CLIENT EMAIL
+# ULTRA FAST Order Form
 if "selected" in st.session_state:
     p = st.session_state.selected
     st.markdown("<div class='admin-card'>", unsafe_allow_html=True)
     st.markdown(f"### 🛒 Checkout\n**Product:** {p['name']}")
-    with st.form("order"):
+    
+    with st.form("order", clear_on_submit=True):
         col1, col2 = st.columns(2)
         name = col1.text_input("Full Name *")
         phone = col1.text_input("Phone *")
@@ -791,107 +820,88 @@ if "selected" in st.session_state:
         qty = col2.number_input("Quantity *", min_value=1, value=1)
         total = int(p["price"]) * int(qty)
         st.markdown(f"<div class='product-price'>Total: GHS {total}</div>", unsafe_allow_html=True)
-        if st.form_submit_button("🚀 Place Order", use_container_width=True) and name and phone and location:
-            # Show loading animation
-            loading_placeholder = st.empty()
-            loading_placeholder.markdown("""
-                <div class='loading-dots'>
-                    <span></span>
-                    <span></span>
-                    <span></span>
+        
+        submitted = st.form_submit_button("🚀 Place Order", use_container_width=True)
+        
+        if submitted and name and phone and location:
+            # Show loading immediately
+            loading_container = st.empty()
+            loading_container.markdown("""
+                <div class='loading-overlay'>
+                    <div class='loading-dots'>
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                    <div class='loading-text'>Processing Order...</div>
                 </div>
             """, unsafe_allow_html=True)
             
-            # Generate reference and timestamp
+            # Generate reference
             ref = generate_reference(p["name"], location)
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             
-            # Save to Google Sheets (main priority)
-            orders_sheet.append_row([name, phone, location, p["name"], qty, total, ref, timestamp, "Pending"])
-            
-            # Send admin notifications in the background (non-blocking)
-            email_body = f"""
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <style>
-                    body {{ font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px; }}
-                    .container {{ background: white; padding: 30px; border-radius: 10px; max-width: 600px; margin: 0 auto; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }}
-                    .header {{ background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 10px 10px 0 0; text-align: center; }}
-                    .content {{ padding: 20px; }}
-                    .order-detail {{ margin: 10px 0; padding: 10px; background: #f8f9fa; border-left: 4px solid #667eea; }}
-                    .label {{ font-weight: bold; color: #667eea; }}
-                    .total {{ font-size: 24px; color: #28a745; font-weight: bold; margin-top: 20px; }}
-                    .footer {{ text-align: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid #dee2e6; color: #6c757d; }}
-                </style>
-            </head>
-            <body>
-                <div class='container'>
-                    <div class='header'>
-                        <h1>🛒 NEW ORDER RECEIVED!</h1>
-                    </div>
-                    <div class='content'>
-                        <div class='order-detail'>
-                            <span class='label'>📦 Product:</span> {p['name']}
-                        </div>
-                        <div class='order-detail'>
-                            <span class='label'>👤 Customer:</span> {name}
-                        </div>
-                        <div class='order-detail'>
-                            <span class='label'>📱 Phone:</span> <a href='tel:{phone}'>{phone}</a>
-                        </div>
-                        <div class='order-detail'>
-                            <span class='label'>📍 Location:</span> {location}
-                        </div>
-                        <div class='order-detail'>
-                            <span class='label'>🔢 Quantity:</span> {qty}
-                        </div>
-                        <div class='order-detail'>
-                            <span class='label'>🔖 Reference:</span> {ref}
-                        </div>
-                        <div class='order-detail'>
-                            <span class='label'>🕐 Time:</span> {timestamp}
-                        </div>
-                        <div class='total'>
-                            💰 Total: GHS {total}
-                        </div>
-                    </div>
-                    <div class='footer'>
-                        <p>Log in to your admin dashboard to manage this order</p>
-                        <p><small>Retro Jersey Shop © 2026</small></p>
-                    </div>
-                </div>
-            </body>
-            </html>
-            """
-            
-            # Send notifications (non-blocking - don't wait for response)
-            telegram_msg = f"🛒 NEW ORDER!\n📦 {p['name']}\n👤 {name}\n📱 {phone}\n📍 {location}\n💰 GHS {total}\n🔖 {ref}"
+            # Save to Google Sheets IMMEDIATELY (this is the priority)
             try:
-                send_telegram_notification(telegram_msg)
-                send_email_notification(f"🛒 New Order: {ref}", email_body)
-            except:
-                pass  # Silently fail - don't block user experience
-            
-            # Clear cache and show success immediately
-            loading_placeholder.empty()
-            st.cache_data.clear()
-            
-            st.markdown(f"<div class='order-success'>✅ Order Placed Successfully!<br><br>📦 Product: {p['name']}<br>💰 Total: GHS {total}<br>🔖 Reference: {ref}<br><br>We'll contact you shortly at {phone} to confirm your order!</div>", unsafe_allow_html=True)
-            
-            del st.session_state.selected
-            
-            # Auto-redirect after 3 seconds
-            st.markdown("""
-                <script>
-                setTimeout(function() {
-                    window.location.href = window.location.href.split('?')[0];
-                }, 3000);
-                </script>
-            """, unsafe_allow_html=True)
+                orders_sheet.append_row([name, phone, location, p["name"], qty, total, ref, timestamp, "Pending"])
+                
+                # Send notifications asynchronously in background (doesn't block)
+                telegram_msg = f"🛒 NEW ORDER!\n📦 {p['name']}\n👤 {name}\n📱 {phone}\n📍 {location}\n💰 GHS {total}\n🔖 {ref}"
+                email_body = f"""
+                <!DOCTYPE html>
+                <html>
+                <body style='font-family: Arial, sans-serif;'>
+                    <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; text-align: center;'>
+                        <h1>🛒 NEW ORDER!</h1>
+                    </div>
+                    <div style='padding: 20px;'>
+                        <p><strong>📦 Product:</strong> {p['name']}</p>
+                        <p><strong>👤 Customer:</strong> {name}</p>
+                        <p><strong>📱 Phone:</strong> {phone}</p>
+                        <p><strong>📍 Location:</strong> {location}</p>
+                        <p><strong>🔢 Quantity:</strong> {qty}</p>
+                        <p><strong>💰 Total:</strong> GHS {total}</p>
+                        <p><strong>🔖 Reference:</strong> {ref}</p>
+                    </div>
+                </body>
+                </html>
+                """
+                send_notifications_async(telegram_msg, f"🛒 New Order: {ref}", email_body)
+                
+                # Clear loading and show success IMMEDIATELY
+                loading_container.empty()
+                st.cache_data.clear()
+                
+                st.markdown(f"""
+                    <div class='order-success'>
+                        ✅ Order Placed Successfully!<br><br>
+                        📦 Product: {p['name']}<br>
+                        💰 Total: GHS {total}<br>
+                        🔖 Reference: {ref}<br><br>
+                        We'll contact you shortly at {phone}!
+                    </div>
+                """, unsafe_allow_html=True)
+                
+                # Clean up
+                if "selected" in st.session_state:
+                    del st.session_state.selected
+                
+                # Redirect after 2 seconds
+                st.markdown("""
+                    <script>
+                    setTimeout(function() {
+                        window.location.href = window.location.pathname;
+                    }, 2000);
+                    </script>
+                """, unsafe_allow_html=True)
+                
+            except Exception as e:
+                loading_container.empty()
+                st.error(f"❌ Error: {e}")
+    
     st.markdown("</div>", unsafe_allow_html=True)
 
-# IMPROVED FOOTER - CLEAR AND READABLE
+# Footer
 st.markdown("""
 <div class='footer'>
     <div class='footer-contact'>
