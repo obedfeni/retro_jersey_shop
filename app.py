@@ -1,6 +1,7 @@
-
-# RETRO JERSEY SHOP 
-
+# ========================================== 
+# RETRO JERSEY SHOP - ULTRA FAST PERFORMANCE EDITION 
+# Aggressive Caching, Async Notifications, Instant Loading 
+# ========================================== 
 import streamlit as st
 import gspread, pandas as pd, os, json, random, requests, smtplib
 from datetime import datetime
@@ -151,11 +152,28 @@ for key in ["admin_logged", "show_admin_login", "visit_tracked", "loading"]:
 if "page" in st.query_params and st.query_params["page"] == "admin":
     st.session_state.show_admin_login = True
 
-# Hide Streamlit UI
+# Hide Streamlit UI and branding
 st.markdown("""<style>
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
+    
+    /* Hide "You need to enable JavaScript" message */
+    noscript {display: none !important;}
+    
+    /* Hide Streamlit branding */
+    .stDeployButton {display: none;}
+    .viewerBadge_container__1QSob {display: none;}
+    .styles_viewerBadge__1yB5_ {display: none;}
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    .stApp header {visibility: hidden;}
+    
+    /* Remove "Made with Streamlit" */
+    footer:after {
+        content: '';
+        display: none;
+    }
 </style>""", unsafe_allow_html=True)
 
 # Professional Theme + Loading Animation
