@@ -452,22 +452,32 @@ st.markdown("""<style>
         box-shadow: 0 20px 40px rgba(102, 126, 234, 0.2);
     }
     
-    .product-image-container {
+    .product-image-wrapper {
         position: relative;
         width: 100%;
-        padding-top: 100%; /* 1:1 Aspect Ratio */
+        aspect-ratio: 1 / 1;
         overflow: hidden;
         background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
     }
     
-    .product-image {
-        position: absolute;
-        top: 0;
-        left: 0;
+    .product-image-container {
+        position: relative;
         width: 100%;
         height: 100%;
-        object-fit: cover;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 10px;
+    }
+    
+    .product-image {
+        max-width: 100%;
+        max-height: 100%;
+        width: auto;
+        height: auto;
+        object-fit: contain;
         transition: transform 0.3s ease;
+        border-radius: 8px;
     }
     
     .product-card:hover .product-image {
@@ -562,46 +572,46 @@ st.markdown("""<style>
     /* ==========================================
        CAROUSEL CONTROLS
        ========================================== */
-    .carousel-container {
-        position: absolute;
-        bottom: 10px;
-        left: 50%;
-        transform: translateX(-50%);
+    .carousel-controls {
         display: flex;
         align-items: center;
-        gap: 10px;
-        background: rgba(0,0,0,0.6);
-        padding: 0.4rem 0.8rem;
-        border-radius: 20px;
-        backdrop-filter: blur(10px);
+        justify-content: center;
+        gap: 15px;
+        padding: 10px;
+        background: rgba(255,255,255,0.9);
+        border-top: 1px solid #e2e8f0;
     }
     
     .carousel-btn {
-        background: rgba(255,255,255,0.9);
+        background: linear-gradient(135deg, #667eea, #764ba2);
         border: none;
-        width: 28px;
-        height: 28px;
+        width: 32px;
+        height: 32px;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
         cursor: pointer;
-        font-size: 0.8rem;
-        color: #333;
+        font-size: 0.9rem;
+        color: white;
         transition: all 0.2s;
+        box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
     }
     
     .carousel-btn:hover {
-        background: white;
         transform: scale(1.1);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
     }
     
     .carousel-indicator {
-        color: white;
-        font-size: 0.75rem;
-        font-weight: 600;
-        min-width: 30px;
+        color: #4a5568;
+        font-size: 0.85rem;
+        font-weight: 700;
+        min-width: 40px;
         text-align: center;
+        background: #edf2f7;
+        padding: 4px 12px;
+        border-radius: 12px;
     }
     
     /* ==========================================
@@ -914,6 +924,47 @@ st.markdown("""<style>
         border-color: #667eea !important;
         background: #f7fafc !important;
     }
+    
+    /* ==========================================
+       ORDER STATUS BADGES FOR EXPANDER
+       ========================================== */
+    .status-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .status-approved {
+        background: linear-gradient(135deg, #48bb78, #38a169);
+        color: white;
+    }
+    .status-pending {
+        background: linear-gradient(135deg, #ed8936, #dd6b20);
+        color: white;
+    }
+    
+    /* ==========================================
+       ADMIN PRODUCT MANAGEMENT
+       ========================================== */
+    .admin-product-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        border: 1px solid #e2e8f0;
+    }
+    
+    .admin-product-image {
+        width: 100%;
+        aspect-ratio: 1 / 1;
+        object-fit: cover;
+        border-radius: 8px;
+        margin-bottom: 0.5rem;
+    }
 </style>""", unsafe_allow_html=True)
 
 # ==========================================
@@ -1088,7 +1139,7 @@ if st.session_state.admin_logged:
     
     st.markdown("</div>", unsafe_allow_html=True)
     
-    # Manage Products
+    # Manage Products - FIXED VERSION
     st.markdown("<div class='admin-card'>", unsafe_allow_html=True)
     st.markdown("### 🗂️ Manage Products")
     
@@ -1099,24 +1150,34 @@ if st.session_state.admin_logged:
                 if idx + i < len(products_df):
                     row = products_df.iloc[idx + i]
                     with col:
+                        # Display first image only in admin grid
                         if row.get("image1") and str(row["image1"]).strip():
-                            st.image(row["image1"], use_container_width=True)
+                            st.image(row["image1"], use_container_width=True, clamp=True)
                         else:
                             st.info("No image")
+                        
                         st.markdown(f"**{row['name']}**")
                         st.markdown(f"<span style='color:#667eea;font-weight:700;'>GHS {row['price']}</span>", unsafe_allow_html=True)
                         st.caption(f"Stock: {row.get('stock', 0)}")
                         
-                        if st.button("🗑️ Delete", key=f"del_{row['id']}", use_container_width=True):
+                        # FIXED: Convert numpy int64 to Python int for JSON serialization
+                        delete_row_num = int(row["_row"])
+                        product_id = int(row["id"])
+                        
+                        if st.button("🗑️ Delete", key=f"del_{product_id}", use_container_width=True):
+                            # Delete from Cloudinary first
                             for col_name in ['image1', 'image2', 'image3', 'video']:
                                 if row.get(col_name) and 'cloudinary.com' in str(row[col_name]):
-                                    delete_from_cloudinary(row[col_name])
+                                    delete_from_cloudinary(str(row[col_name]))
+                            
                             try:
                                 client = get_sheets_client()
                                 sheet = client.open("retro_jersey_shop").worksheet("products")
-                                sheet.delete_rows(row["_row"])
+                                # Use the converted Python int
+                                sheet.delete_rows(delete_row_num)
                                 st.cache_data.clear()
                                 st.success("Deleted!")
+                                time.sleep(0.5)
                                 st.rerun()
                             except Exception as e:
                                 st.error(f"Error: {str(e)}")
@@ -1125,52 +1186,97 @@ if st.session_state.admin_logged:
     
     st.markdown("</div>", unsafe_allow_html=True)
     
-    # Orders Management
+    # Orders Management - FIXED VERSION
     st.markdown("<div class='admin-card'>", unsafe_allow_html=True)
     st.markdown("### 📦 Recent Orders")
     
     if not orders_df.empty:
         for idx, order in orders_df.iterrows():
-            status_color = "#48bb78" if order['status'] == 'Approved' else "#ed8936"
-            with st.expander(f"📦 {order['reference']} - {order['name']} - GHS {order['amount']} - <span style='color:{status_color}'>{order['status']}</span>"):
+            # Use emoji indicators in expander label (no HTML allowed in expander labels)
+            if order['status'] == 'Approved':
+                status_icon = "✅"
+                status_text = "Approved"
+            else:
+                status_icon = "⏳"
+                status_text = "Pending"
+            
+            # FIXED: Convert numpy types to Python native types
+            order_ref = str(order['reference'])
+            order_name = str(order['name'])
+            order_amount = float(order['amount']) if pd.notna(order['amount']) else 0
+            
+            # Plain text label for expander
+            expander_label = f"📦 {order_ref} - {order_name} - GHS {order_amount:.0f} - {status_icon} {status_text}"
+            
+            with st.expander(expander_label):
                 col1, col2 = st.columns([2, 1])
                 with col1:
+                    # HTML badge inside the expander content
+                    status_color_class = "status-approved" if order['status'] == 'Approved' else "status-pending"
                     st.markdown(f"""
-                        **Customer:** {order['name']}<br>
-                        **Phone:** {order['phone']}<br>
-                        **Location:** {order['location']}<br>
-                        **Product:** {order['items']}<br>
-                        **Quantity:** {order['qty']}<br>
-                        **Amount:** GHS {order['amount']}<br>
-                        **Reference:** {order['reference']}<br>
-                        **Date:** {order['timestamp']}
+                        <div style='margin-bottom:15px;'>
+                            <span class='status-badge {status_color_class}'>
+                                {order['status']}
+                            </span>
+                        </div>
+                        <div style='line-height:1.8;color:#2d3748;'>
+                            <b style='color:#667eea;'>Customer:</b> {order['name']}<br>
+                            <b style='color:#667eea;'>Phone:</b> {order['phone']}<br>
+                            <b style='color:#667eea;'>Location:</b> {order['location']}<br>
+                            <b style='color:#667eea;'>Product:</b> {order['items']}<br>
+                            <b style='color:#667eea;'>Quantity:</b> {order['qty']}<br>
+                            <b style='color:#667eea;'>Amount:</b> GHS {order['amount']}<br>
+                            <b style='color:#667eea;'>Reference:</b> <code style='background:#edf2f7;padding:2px 6px;border-radius:4px;'>{order['reference']}</code><br>
+                            <b style='color:#667eea;'>Date:</b> {order['timestamp']}
+                        </div>
                     """, unsafe_allow_html=True)
+                
                 with col2:
-                    # WhatsApp contact
+                    # WhatsApp contact button
                     clean_phone = ''.join(filter(str.isdigit, str(order['phone'])))
                     if not clean_phone.startswith('233'):
                         clean_phone = '233' + clean_phone.lstrip('0')
                     
-                    msg = f"Hi {order['name']}! Your order {order['reference']} for {order['items']} (GHS {order['amount']}) is confirmed!"
+                    msg = f"Hi {order['name']}! Your order {order['reference']} for {order['items']} (GHS {order['amount']}) is confirmed! 🎉"
                     wa_url = f"https://wa.me/{clean_phone}?text={quote(msg)}"
                     
                     st.markdown(f"""
-                        <a href="{wa_url}" target="_blank" style="display:block;background:#25D366;color:white;padding:10px;border-radius:8px;text-align:center;text-decoration:none;margin-bottom:10px;font-weight:600;">
+                        <a href="{wa_url}" target="_blank" style="display:block;background:linear-gradient(135deg, #25D366, #128C7E);color:white;padding:12px;border-radius:10px;text-align:center;text-decoration:none;margin-bottom:12px;font-weight:600;box-shadow:0 4px 10px rgba(37, 211, 102, 0.3);transition:all 0.3s;">
                             📱 WhatsApp Customer
                         </a>
                     """, unsafe_allow_html=True)
                     
+                    # FIXED: Convert numpy int64 to Python int
+                    order_row_num = int(order["_row"])
+                    
+                    # Approve button or approved status
                     if order['status'] == 'Pending':
-                        if st.button("✅ Approve", key=f"app_{idx}", use_container_width=True):
+                        if st.button("✅ Approve Order", key=f"app_{idx}", use_container_width=True):
                             try:
                                 client = get_sheets_client()
                                 sheet = client.open("retro_jersey_shop").worksheet("orders")
-                                sheet.update_cell(order["_row"], 9, "Approved")
+                                sheet.update_cell(order_row_num, 9, "Approved")
                                 st.cache_data.clear()
-                                st.success("Approved!")
+                                st.success("✅ Order approved!")
+                                time.sleep(0.5)
                                 st.rerun()
                             except Exception as e:
                                 st.error(f"Error: {str(e)}")
+                    else:
+                        st.markdown("""
+                            <div style='text-align:center;padding:12px;background:linear-gradient(135deg, #48bb78, #38a169);color:white;border-radius:10px;font-weight:600;'>
+                                ✅ Approved
+                            </div>
+                        """, unsafe_allow_html=True)
+                        
+                        # Share buttons for approved orders
+                        share_urls = get_share_url(order['items'], order['amount'], "")
+                        st.markdown(f"""
+                            <div style='margin-top:12px;display:flex;gap:8px;justify-content:center;'>
+                                <a href="{share_urls['whatsapp']}" target="_blank" style="flex:1;background:#25D366;color:white;padding:8px;border-radius:6px;text-align:center;text-decoration:none;font-size:0.8rem;">📱</a>
+                                <a href="{share_urls['facebook']}" target="_blank" style="flex:1;background:#1877F2;color:white;padding:8px;border-radius:6px;text-align:center;text-decoration:none;font-size:0.8rem;">👍</a>
+                            </div>
+                        """, unsafe_allow_html=True)
     else:
         st.info("No orders yet")
     
@@ -1178,7 +1284,7 @@ if st.session_state.admin_logged:
     st.stop()
 
 # ==========================================
-# PUBLIC SHOP - OPTIMIZED UI
+# PUBLIC SHOP - OPTIMIZED UI WITH WORKING CAROUSEL
 # ==========================================
 products_df = load_products()
 
@@ -1219,49 +1325,72 @@ if not products_df.empty:
                 if idx + i < len(filtered_df):
                     row = filtered_df.iloc[idx + i]
                     with col:
-                        images = [row.get(f"image{i}", "") for i in range(1, 4) if row.get(f"image{i}")]
-                        video = row.get("video", "")
+                        # FIXED: Properly collect all images including empty checks
+                        images = []
+                        for img_idx in range(1, 4):
+                            img_key = f"image{img_idx}"
+                            if img_key in row and row[img_key] and str(row[img_key]).strip():
+                                images.append(str(row[img_key]))
                         
-                        carousel_key = f"carousel_{row['id']}"
+                        video = str(row.get("video", "")) if pd.notna(row.get("video")) else ""
+                        
+                        # Initialize carousel state
+                        carousel_key = f"carousel_{int(row['id'])}"
                         if carousel_key not in st.session_state:
                             st.session_state[carousel_key] = 0
                         
+                        # Ensure index is valid
+                        if images:
+                            st.session_state[carousel_key] = st.session_state[carousel_key] % len(images)
+                        
                         badge_class = "badge-in-stock" if row["status"] == "In Stock" else "badge-out-stock"
                         
-                        # Media display with lazy loading
-                        if video and 'cloudinary.com' in str(video):
+                        # FIXED: Better image container with proper padding
+                        if video and 'cloudinary.com' in video:
                             media_html = f"""
-                                <div class='product-image-container'>
-                                    <video class='product-image' controls loading='lazy' poster='{images[0] if images else ''}'>
-                                        <source src='{video}' type='video/mp4'>
-                                    </video>
+                                <div class='product-image-wrapper'>
+                                    <div class='product-image-container'>
+                                        <video class='product-image' controls loading='lazy' poster='{images[0] if images else ''}' style='max-height:90%;'>
+                                            <source src='{video}' type='video/mp4'>
+                                        </video>
+                                    </div>
                                     <div class='badge {badge_class}'>{row['status']}</div>
                                 </div>
                             """
                         else:
                             current_img = images[st.session_state[carousel_key]] if images else ""
                             media_html = f"""
-                                <div class='product-image-container'>
-                                    <img src='{current_img}' class='product-image' loading='lazy' alt='{row['name']}' width='400' height='400'>
+                                <div class='product-image-wrapper'>
+                                    <div class='product-image-container'>
+                                        <img src='{current_img}' class='product-image' loading='lazy' alt='{row['name']}'>
+                                    </div>
                                     <div class='badge {badge_class}'>{row['status']}</div>
                                 </div>
                             """
                         
                         st.markdown(f"<div class='product-card'>{media_html}", unsafe_allow_html=True)
                         
-                        # Carousel controls
+                        # FIXED: Better carousel controls
                         if len(images) > 1:
+                            st.markdown("""
+                                <div class='carousel-controls'>
+                            """, unsafe_allow_html=True)
+                            
                             col_l, col_m, col_r = st.columns([1, 2, 1])
                             with col_l:
-                                if st.button("◀", key=f"prev_{row['id']}", use_container_width=True):
-                                    st.session_state[carousel_key] = (st.session_state[carousel_key] - 1) % len(images)
+                                if st.button("◀", key=f"prev_{int(row['id'])}_{idx}_{i}", use_container_width=True):
+                                    new_idx = (st.session_state[carousel_key] - 1) % len(images)
+                                    st.session_state[carousel_key] = new_idx
                                     st.rerun()
                             with col_m:
-                                st.markdown(f"<div style='text-align:center;font-size:0.8rem;color:#718096;padding-top:5px;'>{st.session_state[carousel_key] + 1}/{len(images)}</div>", unsafe_allow_html=True)
+                                st.markdown(f"<div class='carousel-indicator'>{st.session_state[carousel_key] + 1} / {len(images)}</div>", unsafe_allow_html=True)
                             with col_r:
-                                if st.button("▶", key=f"next_{row['id']}", use_container_width=True):
-                                    st.session_state[carousel_key] = (st.session_state[carousel_key] + 1) % len(images)
+                                if st.button("▶", key=f"next_{int(row['id'])}_{idx}_{i}", use_container_width=True):
+                                    new_idx = (st.session_state[carousel_key] + 1) % len(images)
+                                    st.session_state[carousel_key] = new_idx
                                     st.rerun()
+                            
+                            st.markdown("</div>", unsafe_allow_html=True)
                         
                         st.markdown(f"""
                             <div class='product-content'>
@@ -1272,9 +1401,9 @@ if not products_df.empty:
                         """, unsafe_allow_html=True)
                         
                         if row["status"] == "Out of Stock":
-                            st.button("❌ Out of Stock", key=f"out_{row['id']}", disabled=True, use_container_width=True)
+                            st.button("❌ Out of Stock", key=f"out_{int(row['id'])}", disabled=True, use_container_width=True)
                         else:
-                            if st.button("🛒 Order Now", key=f"order_{row['id']}", use_container_width=True):
+                            if st.button("🛒 Order Now", key=f"order_{int(row['id'])}", use_container_width=True):
                                 st.session_state.selected = row
                                 st.rerun()
                         
