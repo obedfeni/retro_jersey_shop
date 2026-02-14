@@ -1,6 +1,6 @@
 # ========================================== 
-# RETRO JERSEY SHOP - PROFESSIONAL EDITION 
-# Enhanced UI, SEO-Optimized, Mobile-First, Ultra-Fast
+# RETRO JERSEY SHOP - ADDICTIVE EDITION 
+# Gamified, Micro-interactions, Mobile-Optimized
 # ========================================== 
 import streamlit as st
 import gspread, pandas as pd, os, json, random, requests, smtplib
@@ -183,9 +183,9 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Session State
-for key in ["admin_logged", "show_admin_login", "visit_tracked", "loading", "cart"]:
+for key in ["admin_logged", "show_admin_login", "visit_tracked", "loading", "cart", "wishlist", "last_viewed", "streak", "coins"]:
     if key not in st.session_state:
-        st.session_state[key] = False if key != "cart" else []
+        st.session_state[key] = False if key != "cart" and key != "wishlist" and key != "last_viewed" else [] if key in ["cart", "wishlist"] else None if key == "last_viewed" else 0
 
 if "page" in st.query_params and st.query_params["page"] == "admin":
     st.session_state.show_admin_login = True
@@ -229,10 +229,10 @@ st.markdown("""<style>
 </style>""", unsafe_allow_html=True)
 
 # ==========================================
-# PROFESSIONAL THEME - MOBILE FIRST
+# ADDICTIVE GAMIFIED THEME - MOBILE FIRST
 # ==========================================
 st.markdown("""<style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
     
     * {
         margin: 0;
@@ -247,7 +247,56 @@ st.markdown("""<style>
     }
     
     /* ==========================================
-       PROFESSIONAL HEADER
+       FLOATING ANIMATION KEYFRAMES
+       ========================================== */
+    @keyframes float {
+        0%, 100% { transform: translateY(0px) rotate(-3deg); }
+        50% { transform: translateY(-10px) rotate(-3deg); }
+    }
+    
+    @keyframes pulse-glow {
+        0%, 100% { box-shadow: 0 0 20px rgba(102, 126, 234, 0.4); }
+        50% { box-shadow: 0 0 40px rgba(102, 126, 234, 0.8), 0 0 60px rgba(118, 75, 162, 0.4); }
+    }
+    
+    @keyframes shimmer {
+        0% { background-position: -1000px 0; }
+        100% { background-position: 1000px 0; }
+    }
+    
+    @keyframes bounce-in {
+        0% { transform: scale(0.3); opacity: 0; }
+        50% { transform: scale(1.05); }
+        70% { transform: scale(0.9); }
+        100% { transform: scale(1); opacity: 1; }
+    }
+    
+    @keyframes slide-up {
+        0% { transform: translateY(30px); opacity: 0; }
+        100% { transform: translateY(0); opacity: 1; }
+    }
+    
+    @keyframes wiggle {
+        0%, 100% { transform: rotate(-3deg); }
+        25% { transform: rotate(3deg); }
+        75% { transform: rotate(-3deg); }
+    }
+    
+    @keyframes heartbeat {
+        0%, 100% { transform: scale(1); }
+        14% { transform: scale(1.1); }
+        28% { transform: scale(1); }
+        42% { transform: scale(1.1); }
+        70% { transform: scale(1); }
+    }
+    
+    @keyframes confetti-fall {
+        0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }
+        100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+    }
+    
+    /* ==========================================
+       PROFESSIONAL HEADER WITH ANIMATION
        ========================================== */
     .header {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -260,6 +309,7 @@ st.markdown("""<style>
         box-shadow: 0 10px 40px rgba(102, 126, 234, 0.3);
         position: relative;
         overflow: hidden;
+        animation: slide-up 0.6s ease-out;
     }
     
     .header::before {
@@ -272,6 +322,7 @@ st.markdown("""<style>
         background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
         background-size: 20px 20px;
         opacity: 0.3;
+        animation: shimmer 20s linear infinite;
     }
     
     .logo-container {
@@ -293,11 +344,13 @@ st.markdown("""<style>
         box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         flex-shrink: 0;
         transform: rotate(-3deg);
-        transition: transform 0.3s ease;
+        transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        animation: float 3s ease-in-out infinite, pulse-glow 2s ease-in-out infinite;
     }
     
     .logo:hover {
-        transform: rotate(0deg) scale(1.05);
+        transform: rotate(0deg) scale(1.1);
+        animation: wiggle 0.5s ease-in-out, pulse-glow 1s ease-in-out infinite;
     }
     
     .brand-container {
@@ -313,6 +366,7 @@ st.markdown("""<style>
         line-height: 1.2;
         letter-spacing: -0.02em;
         text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        animation: slide-up 0.6s ease-out 0.1s both;
     }
     
     .brand-subtitle {
@@ -321,6 +375,7 @@ st.markdown("""<style>
         color: rgba(255,255,255,0.9);
         margin-top: 4px;
         font-weight: 500;
+        animation: slide-up 0.6s ease-out 0.2s both;
     }
     
     /* Mobile optimizations */
@@ -362,7 +417,7 @@ st.markdown("""<style>
     }
     
     /* ==========================================
-       FLASH SALE BANNER
+       FLASH SALE BANNER - URGENCY ANIMATION
        ========================================== */
     .flash-sale {
         background: linear-gradient(90deg, #f093fb 0%, #f5576c 50%, #f093fb 100%);
@@ -374,8 +429,32 @@ st.markdown("""<style>
         font-weight: 700;
         margin: 1rem 0 1.5rem 0;
         box-shadow: 0 4px 15px rgba(245, 87, 108, 0.3);
-        animation: shimmer 3s linear infinite;
+        animation: shimmer 3s linear infinite, slide-up 0.6s ease-out 0.3s both;
         border: 2px solid rgba(255,255,255,0.3);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .flash-sale::before {
+        content: '🔥';
+        position: absolute;
+        left: 10%;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 1.5rem;
+        opacity: 0.3;
+        animation: float 2s ease-in-out infinite;
+    }
+    
+    .flash-sale::after {
+        content: '🔥';
+        position: absolute;
+        right: 10%;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 1.5rem;
+        opacity: 0.3;
+        animation: float 2s ease-in-out infinite 0.5s;
     }
     
     @keyframes shimmer {
@@ -386,6 +465,8 @@ st.markdown("""<style>
         font-size: 1rem;
         text-transform: uppercase;
         letter-spacing: 1px;
+        position: relative;
+        z-index: 1;
     }
     
     @media (min-width: 768px) {
@@ -393,6 +474,40 @@ st.markdown("""<style>
             padding: 1.2rem;
             font-size: 1.2rem;
         }
+    }
+    
+    /* ==========================================
+       GAMIFICATION BADGES
+       ========================================== */
+    .streak-badge {
+        background: linear-gradient(135deg, #f6ad55 0%, #ed8936 100%);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        box-shadow: 0 4px 10px rgba(237, 137, 54, 0.3);
+        animation: bounce-in 0.6s ease-out;
+        margin-bottom: 1rem;
+    }
+    
+    .coin-display {
+        background: linear-gradient(135deg, #ecc94b 0%, #d69e2e 100%);
+        color: #744210;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        box-shadow: 0 4px 10px rgba(236, 201, 75, 0.3);
+        animation: bounce-in 0.6s ease-out 0.1s both;
+        margin-bottom: 1rem;
+        margin-left: 0.5rem;
     }
     
     /* ==========================================
@@ -407,6 +522,7 @@ st.markdown("""<style>
         position: relative;
         display: inline-block;
         width: 100%;
+        animation: slide-up 0.6s ease-out;
     }
     
     .section-title::after {
@@ -417,6 +533,7 @@ st.markdown("""<style>
         background: linear-gradient(90deg, #667eea, #764ba2);
         margin: 0.5rem auto 0;
         border-radius: 2px;
+        animation: pulse-glow 2s ease-in-out infinite;
     }
     
     @media (min-width: 768px) {
@@ -427,7 +544,7 @@ st.markdown("""<style>
     }
     
     /* ==========================================
-       PRODUCT CARDS - MODERN GLASSMORPHISM
+       PRODUCT CARDS - ADDICTIVE HOVER EFFECTS
        ========================================== */
     .product-grid {
         display: grid;
@@ -441,15 +558,34 @@ st.markdown("""<style>
         border-radius: 20px;
         overflow: hidden;
         box-shadow: 0 4px 6px rgba(0,0,0,0.05), 0 10px 20px rgba(0,0,0,0.08);
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         border: 1px solid rgba(255,255,255,0.5);
         backdrop-filter: blur(10px);
         position: relative;
+        animation: slide-up 0.6s ease-out;
     }
     
     .product-card:hover {
-        transform: translateY(-8px);
-        box-shadow: 0 20px 40px rgba(102, 126, 234, 0.2);
+        transform: translateY(-12px) scale(1.02);
+        box-shadow: 0 25px 50px rgba(102, 126, 234, 0.25), 0 10px 20px rgba(0,0,0,0.1);
+        border-color: rgba(102, 126, 234, 0.3);
+    }
+    
+    .product-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+        transition: left 0.5s;
+        z-index: 1;
+        pointer-events: none;
+    }
+    
+    .product-card:hover::before {
+        left: 100%;
     }
     
     .product-image-wrapper {
@@ -468,6 +604,7 @@ st.markdown("""<style>
         align-items: center;
         justify-content: center;
         padding: 10px;
+        overflow: hidden;
     }
     
     .product-image {
@@ -476,12 +613,12 @@ st.markdown("""<style>
         width: auto;
         height: auto;
         object-fit: contain;
-        transition: transform 0.3s ease;
+        transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
         border-radius: 8px;
     }
     
     .product-card:hover .product-image {
-        transform: scale(1.05);
+        transform: scale(1.1) rotate(2deg);
     }
     
     .badge {
@@ -496,6 +633,7 @@ st.markdown("""<style>
         letter-spacing: 0.5px;
         z-index: 2;
         box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        animation: bounce-in 0.5s ease-out;
     }
     
     .badge-in-stock {
@@ -508,8 +646,15 @@ st.markdown("""<style>
         color: white;
     }
     
+    .badge-limited {
+        background: linear-gradient(135deg, #ed8936, #dd6b20);
+        color: white;
+        animation: heartbeat 2s ease-in-out infinite;
+    }
+    
     .product-content {
         padding: 1.2rem;
+        position: relative;
     }
     
     .product-name {
@@ -522,6 +667,11 @@ st.markdown("""<style>
         -webkit-line-clamp: 2;
         -webkit-box-orient: vertical;
         overflow: hidden;
+        transition: color 0.3s ease;
+    }
+    
+    .product-card:hover .product-name {
+        color: #667eea;
     }
     
     .product-desc {
@@ -543,6 +693,11 @@ st.markdown("""<style>
         display: flex;
         align-items: center;
         gap: 0.5rem;
+        transition: transform 0.3s ease;
+    }
+    
+    .product-card:hover .product-price {
+        transform: scale(1.05);
     }
     
     .product-price::before {
@@ -550,6 +705,37 @@ st.markdown("""<style>
         font-size: 0.8rem;
         color: #a0aec0;
         font-weight: 600;
+    }
+    
+    /* Wishlist heart animation */
+    .wishlist-btn {
+        position: absolute;
+        top: 12px;
+        left: 12px;
+        background: white;
+        border: none;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        z-index: 2;
+        font-size: 1.2rem;
+    }
+    
+    .wishlist-btn:hover {
+        transform: scale(1.2);
+        box-shadow: 0 4px 12px rgba(245, 87, 108, 0.4);
+    }
+    
+    .wishlist-btn.active {
+        animation: heartbeat 0.5s ease-in-out;
+        background: #f56565;
+        color: white;
     }
     
     /* Mobile optimizations */
@@ -567,17 +753,30 @@ st.markdown("""<style>
         .product-price {
             font-size: 1.1rem;
         }
+        .badge {
+            font-size: 0.65rem;
+            padding: 0.3rem 0.6rem;
+            top: 8px;
+            right: 8px;
+        }
+        .wishlist-btn {
+            width: 32px;
+            height: 32px;
+            font-size: 1rem;
+            top: 8px;
+            left: 8px;
+        }
     }
     
     /* ==========================================
-       CAROUSEL CONTROLS
+       CAROUSEL CONTROLS - MOBILE OPTIMIZED
        ========================================== */
     .carousel-controls {
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 15px;
-        padding: 10px;
+        gap: 8px;
+        padding: 8px;
         background: rgba(255,255,255,0.9);
         border-top: 1px solid #e2e8f0;
     }
@@ -585,37 +784,76 @@ st.markdown("""<style>
     .carousel-btn {
         background: linear-gradient(135deg, #667eea, #764ba2);
         border: none;
-        width: 32px;
-        height: 32px;
+        min-width: 28px;
+        min-height: 28px;
+        width: 28px;
+        height: 28px;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
         cursor: pointer;
-        font-size: 0.9rem;
+        font-size: 0.75rem;
         color: white;
-        transition: all 0.2s;
-        box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+        transition: all 0.2s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        box-shadow: 0 2px 6px rgba(102, 126, 234, 0.3);
+        padding: 0;
+        line-height: 1;
     }
     
     .carousel-btn:hover {
-        transform: scale(1.1);
-        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        transform: scale(1.15);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.5);
+    }
+    
+    .carousel-btn:active {
+        transform: scale(0.95);
     }
     
     .carousel-indicator {
         color: #4a5568;
-        font-size: 0.85rem;
+        font-size: 0.75rem;
         font-weight: 700;
-        min-width: 40px;
+        min-width: 35px;
         text-align: center;
         background: #edf2f7;
-        padding: 4px 12px;
+        padding: 4px 10px;
         border-radius: 12px;
+        transition: all 0.3s ease;
+    }
+    
+    /* Mobile optimized carousel buttons */
+    @media (max-width: 480px) {
+        .carousel-controls {
+            gap: 6px;
+            padding: 6px;
+        }
+        .carousel-btn {
+            min-width: 24px;
+            min-height: 24px;
+            width: 24px;
+            height: 24px;
+            font-size: 0.65rem;
+        }
+        .carousel-indicator {
+            font-size: 0.7rem;
+            min-width: 30px;
+            padding: 3px 8px;
+        }
+    }
+    
+    @media (min-width: 768px) {
+        .carousel-btn {
+            min-width: 32px;
+            min-height: 32px;
+            width: 32px;
+            height: 32px;
+            font-size: 0.85rem;
+        }
     }
     
     /* ==========================================
-       BUTTONS - MODERN STYLING
+       BUTTONS - ADDICTIVE MICRO-INTERACTIONS
        ========================================== */
     .stButton > button {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
@@ -625,18 +863,38 @@ st.markdown("""<style>
         padding: 0.8rem 1.5rem !important;
         font-weight: 600 !important;
         font-size: 0.95rem !important;
-        transition: all 0.3s ease !important;
+        transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55) !important;
         box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3) !important;
         width: 100% !important;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .stButton > button::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.3);
+        transform: translate(-50%, -50%);
+        transition: width 0.6s, height 0.6s;
     }
     
     .stButton > button:hover {
-        transform: translateY(-2px) !important;
-        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4) !important;
+        transform: translateY(-3px) scale(1.02) !important;
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4) !important;
+    }
+    
+    .stButton > button:hover::before {
+        width: 300px;
+        height: 300px;
     }
     
     .stButton > button:active {
-        transform: translateY(0) !important;
+        transform: translateY(-1px) scale(0.98) !important;
     }
     
     .stButton > button:disabled {
@@ -653,8 +911,25 @@ st.markdown("""<style>
         border: 2px solid #667eea !important;
     }
     
+    .secondary-btn > button:hover {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        color: white !important;
+    }
+    
+    /* Addictive order button */
+    .order-btn > button {
+        background: linear-gradient(135deg, #48bb78 0%, #38a169 100%) !important;
+        box-shadow: 0 4px 15px rgba(72, 187, 120, 0.3) !important;
+        animation: pulse-glow 2s ease-in-out infinite;
+    }
+    
+    .order-btn > button:hover {
+        box-shadow: 0 8px 25px rgba(72, 187, 120, 0.5) !important;
+        animation: none;
+    }
+    
     /* ==========================================
-       FORMS - CLEAN INPUTS
+       FORMS - CLEAN INPUTS WITH MICRO-INTERACTIONS
        ========================================== */
     .stTextInput > div > div > input,
     .stNumberInput > div > div > input,
@@ -665,14 +940,15 @@ st.markdown("""<style>
         border-radius: 12px !important;
         padding: 0.9rem 1rem !important;
         font-size: 1rem !important;
-        transition: all 0.3s ease !important;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
     }
     
     .stTextInput > div > div > input:focus,
     .stNumberInput > div > div > input:focus,
     .stTextArea > div > div > textarea:focus {
         border-color: #667eea !important;
-        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1) !important;
+        box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1) !important;
+        transform: translateY(-2px);
         outline: none !important;
     }
     
@@ -683,6 +959,12 @@ st.markdown("""<style>
         font-weight: 600 !important;
         font-size: 0.9rem !important;
         margin-bottom: 0.4rem !important;
+        transition: color 0.3s ease;
+    }
+    
+    .stTextInput > div > div > input:focus + label,
+    .stNumberInput > div > div > input:focus + label {
+        color: #667eea !important;
     }
     
     /* ==========================================
@@ -695,6 +977,7 @@ st.markdown("""<style>
         box-shadow: 0 4px 6px rgba(0,0,0,0.05);
         margin-bottom: 1.5rem;
         border: 1px solid rgba(255,255,255,0.5);
+        animation: slide-up 0.6s ease-out;
     }
     
     .stat-grid {
@@ -711,11 +994,13 @@ st.markdown("""<style>
         border-radius: 16px;
         text-align: center;
         box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
-        transition: transform 0.3s ease;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        animation: bounce-in 0.6s ease-out;
     }
     
     .stat-box:hover {
-        transform: translateY(-3px);
+        transform: translateY(-5px) scale(1.05);
+        box-shadow: 0 15px 35px rgba(102, 126, 234, 0.4);
     }
     
     .stat-number {
@@ -723,6 +1008,11 @@ st.markdown("""<style>
         font-weight: 800;
         margin-bottom: 0.2rem;
         line-height: 1;
+        transition: transform 0.3s ease;
+    }
+    
+    .stat-box:hover .stat-number {
+        transform: scale(1.1);
     }
     
     .stat-label {
@@ -734,7 +1024,7 @@ st.markdown("""<style>
     }
     
     /* ==========================================
-       ORDER SUCCESS - CELEBRATION
+       ORDER SUCCESS - CELEBRATION ANIMATION
        ========================================== */
     .order-success {
         background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
@@ -746,6 +1036,7 @@ st.markdown("""<style>
         box-shadow: 0 20px 40px rgba(72, 187, 120, 0.3);
         position: relative;
         overflow: hidden;
+        animation: bounce-in 0.8s ease-out;
     }
     
     .order-success::before {
@@ -756,6 +1047,17 @@ st.markdown("""<style>
         font-size: 100px;
         opacity: 0.2;
         transform: rotate(15deg);
+        animation: float 3s ease-in-out infinite;
+    }
+    
+    .order-success::after {
+        content: '⚽';
+        position: absolute;
+        bottom: -10px;
+        left: -10px;
+        font-size: 80px;
+        opacity: 0.2;
+        animation: float 3s ease-in-out infinite 1.5s;
     }
     
     .order-success-title {
@@ -764,6 +1066,7 @@ st.markdown("""<style>
         margin-bottom: 1rem;
         position: relative;
         z-index: 1;
+        animation: slide-up 0.6s ease-out 0.2s both;
     }
     
     .order-success-details {
@@ -772,6 +1075,18 @@ st.markdown("""<style>
         line-height: 1.6;
         position: relative;
         z-index: 1;
+        animation: slide-up 0.6s ease-out 0.4s both;
+    }
+    
+    /* Confetti animation */
+    .confetti {
+        position: fixed;
+        width: 10px;
+        height: 10px;
+        background: #f6ad55;
+        position: absolute;
+        animation: confetti-fall 3s linear forwards;
+        z-index: 9999;
     }
     
     /* ==========================================
@@ -811,6 +1126,7 @@ st.markdown("""<style>
         font-size: 1.1rem;
         color: #667eea;
         font-weight: 600;
+        animation: pulse-glow 1.5s ease-in-out infinite;
     }
     
     /* ==========================================
@@ -824,6 +1140,7 @@ st.markdown("""<style>
         margin-top: 3rem;
         text-align: center;
         position: relative;
+        animation: slide-up 0.6s ease-out;
     }
     
     .footer-content {
@@ -849,12 +1166,27 @@ st.markdown("""<style>
         color: #667eea;
         text-decoration: none;
         font-weight: 600;
-        transition: color 0.3s;
+        transition: all 0.3s;
+        position: relative;
+    }
+    
+    .footer-contact a::after {
+        content: '';
+        position: absolute;
+        bottom: -2px;
+        left: 0;
+        width: 0;
+        height: 2px;
+        background: #667eea;
+        transition: width 0.3s;
     }
     
     .footer-contact a:hover {
         color: #764ba2;
-        text-decoration: underline;
+    }
+    
+    .footer-contact a:hover::after {
+        width: 100%;
     }
     
     .footer-social {
@@ -874,13 +1206,14 @@ st.markdown("""<style>
         justify-content: center;
         color: white;
         text-decoration: none;
-        transition: all 0.3s;
+        transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
         font-size: 1.2rem;
     }
     
     .social-link:hover {
         background: #667eea;
-        transform: translateY(-3px);
+        transform: translateY(-5px) scale(1.1);
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
     }
     
     .footer-copyright {
@@ -918,11 +1251,13 @@ st.markdown("""<style>
         border-radius: 12px !important;
         padding: 2rem !important;
         width: 100% !important;
+        transition: all 0.3s ease !important;
     }
     
     .stFileUploader > div > button:hover {
         border-color: #667eea !important;
         background: #f7fafc !important;
+        transform: translateY(-2px);
     }
     
     /* ==========================================
@@ -956,6 +1291,12 @@ st.markdown("""<style>
         margin-bottom: 1rem;
         box-shadow: 0 2px 8px rgba(0,0,0,0.05);
         border: 1px solid #e2e8f0;
+        transition: all 0.3s ease;
+    }
+    
+    .admin-product-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
     }
     
     .admin-product-image {
@@ -964,6 +1305,118 @@ st.markdown("""<style>
         object-fit: cover;
         border-radius: 8px;
         margin-bottom: 0.5rem;
+        transition: transform 0.3s ease;
+    }
+    
+    .admin-product-card:hover .admin-product-image {
+        transform: scale(1.05);
+    }
+    
+    /* ==========================================
+       MYSTERY BOX / SPIN WHEEL GAMIFICATION
+       ========================================== */
+    .mystery-box {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 20px;
+        padding: 2rem;
+        text-align: center;
+        color: white;
+        margin: 2rem 0;
+        box-shadow: 0 15px 35px rgba(102, 126, 234, 0.3);
+        position: relative;
+        overflow: hidden;
+        animation: slide-up 0.6s ease-out;
+    }
+    
+    .mystery-box::before {
+        content: '🎁';
+        position: absolute;
+        font-size: 150px;
+        opacity: 0.1;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    }
+    
+    .wheel-container {
+        width: 200px;
+        height: 200px;
+        margin: 1rem auto;
+        position: relative;
+        animation: float 3s ease-in-out infinite;
+    }
+    
+    .spin-btn {
+        background: linear-gradient(135deg, #f6ad55 0%, #ed8936 100%) !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 50px !important;
+        padding: 1rem 2rem !important;
+        font-weight: 700 !important;
+        font-size: 1.1rem !important;
+        box-shadow: 0 5px 20px rgba(237, 137, 54, 0.4) !important;
+        animation: pulse-glow 2s ease-in-out infinite;
+        transition: all 0.3s ease !important;
+    }
+    
+    .spin-btn:hover {
+        transform: scale(1.05) !important;
+        box-shadow: 0 8px 30px rgba(237, 137, 54, 0.6) !important;
+    }
+    
+    /* Progress bar for streaks */
+    .streak-progress {
+        background: #e2e8f0;
+        border-radius: 10px;
+        height: 8px;
+        margin: 1rem 0;
+        overflow: hidden;
+        position: relative;
+    }
+    
+    .streak-fill {
+        background: linear-gradient(90deg, #f6ad55, #ed8936);
+        height: 100%;
+        border-radius: 10px;
+        transition: width 0.5s ease;
+        position: relative;
+    }
+    
+    .streak-fill::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+        animation: shimmer 2s infinite;
+    }
+    
+    /* Notification toast */
+    .toast {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: white;
+        padding: 1rem 1.5rem;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        z-index: 9999;
+        animation: slide-up 0.4s ease-out, pulse-glow 2s ease-in-out infinite;
+        border-left: 4px solid #48bb78;
+        max-width: 300px;
+    }
+    
+    .toast-title {
+        font-weight: 700;
+        color: #1a202c;
+        margin-bottom: 0.25rem;
+    }
+    
+    .toast-message {
+        color: #718096;
+        font-size: 0.9rem;
     }
 </style>""", unsafe_allow_html=True)
 
@@ -1009,6 +1462,28 @@ def load_orders():
         return pd.DataFrame()
 
 # ==========================================
+# GAMIFICATION FUNCTIONS
+# ==========================================
+def add_coins(amount):
+    st.session_state.coins += amount
+    return st.session_state.coins
+
+def get_streak_bonus():
+    if st.session_state.streak >= 3:
+        return 0.1  # 10% discount
+    return 0
+
+def show_toast(title, message, type="success"):
+    color = "#48bb78" if type == "success" else "#ed8936" if type == "warning" else "#667eea"
+    st.markdown(f"""
+        <div class="toast" style="border-left-color: {color};">
+            <div class="toast-title">{title}</div>
+            <div class="toast-message">{message}</div>
+        </div>
+    """, unsafe_allow_html=True)
+    time.sleep(0.1)
+
+# ==========================================
 # HEADER COMPONENT
 # ==========================================
 st.markdown("""
@@ -1022,6 +1497,22 @@ st.markdown("""
     </div>
 </div>
 """, unsafe_allow_html=True)
+
+# Gamification Bar
+if st.session_state.coins > 0 or st.session_state.streak > 0:
+    col1, col2 = st.columns(2)
+    with col1:
+        st.markdown(f"""
+            <div class='streak-badge'>
+                🔥 {st.session_state.streak} Day Streak
+            </div>
+        """, unsafe_allow_html=True)
+    with col2:
+        st.markdown(f"""
+            <div class='coin-display'>
+                ⚡ {st.session_state.coins} Coins
+            </div>
+        """, unsafe_allow_html=True)
 
 # Admin Login Toggle
 col1, col2, col3 = st.columns([6, 1, 1])
@@ -1288,6 +1779,29 @@ if st.session_state.admin_logged:
 # ==========================================
 products_df = load_products()
 
+# Mystery Box Gamification Section
+if st.session_state.coins == 0:
+    st.markdown("""
+    <div class='mystery-box'>
+        <h2>🎁 Daily Mystery Reward!</h2>
+        <p>Spin the wheel to win coins, discounts & exclusive offers!</p>
+        <div class='wheel-container'>⚽</div>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        if st.button("🎰 SPIN TO WIN", key="spin_wheel", use_container_width=True):
+            # Simulate spin
+            with st.spinner("Spinning..."):
+                time.sleep(1.5)
+            reward = random.choice([10, 20, 50, 5, 15, 100])
+            st.session_state.coins += reward
+            st.success(f"🎉 You won {reward} coins!")
+            st.balloons()
+            time.sleep(1)
+            st.rerun()
+
 # Flash Sale Banner
 st.markdown("""
 <div class='flash-sale'>
@@ -1343,7 +1857,17 @@ if not products_df.empty:
                         if images:
                             st.session_state[carousel_key] = st.session_state[carousel_key] % len(images)
                         
-                        badge_class = "badge-in-stock" if row["status"] == "In Stock" else "badge-out-stock"
+                        # Determine badge type
+                        stock = int(row.get('stock', 0))
+                        if stock <= 3 and stock > 0:
+                            badge_class = "badge-limited"
+                            badge_text = f"Only {stock} left!"
+                        elif row["status"] == "In Stock":
+                            badge_class = "badge-in-stock"
+                            badge_text = "In Stock"
+                        else:
+                            badge_class = "badge-out-stock"
+                            badge_text = "Out of Stock"
                         
                         # FIXED: Better image container with proper padding
                         if video and 'cloudinary.com' in video:
@@ -1354,7 +1878,7 @@ if not products_df.empty:
                                             <source src='{video}' type='video/mp4'>
                                         </video>
                                     </div>
-                                    <div class='badge {badge_class}'>{row['status']}</div>
+                                    <div class='badge {badge_class}'>{badge_text}</div>
                                 </div>
                             """
                         else:
@@ -1364,18 +1888,33 @@ if not products_df.empty:
                                     <div class='product-image-container'>
                                         <img src='{current_img}' class='product-image' loading='lazy' alt='{row['name']}'>
                                     </div>
-                                    <div class='badge {badge_class}'>{row['status']}</div>
+                                    <div class='badge {badge_class}'>{badge_text}</div>
                                 </div>
                             """
                         
+                        # Wishlist button
+                        is_wishlisted = int(row['id']) in st.session_state.wishlist
+                        wishlist_class = "active" if is_wishlisted else ""
+                        wishlist_emoji = "❤️" if is_wishlisted else "🤍"
+                        
                         st.markdown(f"<div class='product-card'>{media_html}", unsafe_allow_html=True)
                         
-                        # FIXED: Better carousel controls
+                        # Wishlist button
+                        if st.button(f"{wishlist_emoji}", key=f"wish_{int(row['id'])}", help="Add to Wishlist"):
+                            if int(row['id']) in st.session_state.wishlist:
+                                st.session_state.wishlist.remove(int(row['id']))
+                                add_coins(-5)  # Penalty for removing
+                            else:
+                                st.session_state.wishlist.append(int(row['id']))
+                                add_coins(10)  # Reward for adding
+                                st.toast(f"Added to wishlist! +10 coins")
+                            st.rerun()
+                        
+                        # FIXED: Better carousel controls - MOBILE OPTIMIZED
                         if len(images) > 1:
-                            st.markdown("""
-                                <div class='carousel-controls'>
-                            """, unsafe_allow_html=True)
+                            st.markdown("""<div class='carousel-controls'>""", unsafe_allow_html=True)
                             
+                            # Use tighter columns for mobile
                             col_l, col_m, col_r = st.columns([1, 2, 1])
                             with col_l:
                                 if st.button("◀", key=f"prev_{int(row['id'])}_{idx}_{i}", use_container_width=True):
@@ -1403,8 +1942,10 @@ if not products_df.empty:
                         if row["status"] == "Out of Stock":
                             st.button("❌ Out of Stock", key=f"out_{int(row['id'])}", disabled=True, use_container_width=True)
                         else:
+                            # Addictive order button with gamification
                             if st.button("🛒 Order Now", key=f"order_{int(row['id'])}", use_container_width=True):
                                 st.session_state.selected = row
+                                add_coins(5)  # Reward for clicking order
                                 st.rerun()
                         
                         st.markdown("</div>", unsafe_allow_html=True)
@@ -1412,12 +1953,17 @@ else:
     st.info("🏃‍♂️ Loading products... Please wait!")
 
 # ==========================================
-# CHECKOUT FORM - OPTIMIZED
+# CHECKOUT FORM - OPTIMIZED WITH GAMIFICATION
 # ==========================================
 if "selected" in st.session_state:
     p = st.session_state.selected
     st.markdown("<div class='admin-card'>", unsafe_allow_html=True)
     st.markdown(f"### 🛒 Complete Your Order\n**{p['name']}**")
+    
+    # Show streak discount if applicable
+    discount = get_streak_bonus()
+    if discount > 0:
+        st.success(f"🔥 Streak Bonus: {int(discount*100)}% OFF!")
     
     with st.form("checkout", clear_on_submit=True):
         col1, col2 = st.columns(2)
@@ -1426,11 +1972,21 @@ if "selected" in st.session_state:
         location = col2.text_input("Delivery Location *", placeholder="Accra, Kumasi, etc.")
         qty = col2.number_input("Quantity *", min_value=1, value=1, max_value=int(p.get('stock', 10)))
         
-        total = int(p["price"]) * int(qty)
+        # Calculate total with discount
+        subtotal = int(p["price"]) * int(qty)
+        discount_amount = int(subtotal * discount)
+        total = subtotal - discount_amount
+        
+        if discount > 0:
+            st.markdown(f"""
+                <div style='text-decoration: line-through; color: #a0aec0; font-size: 1rem;'>GHS {subtotal}</div>
+            """, unsafe_allow_html=True)
+        
         st.markdown(f"""
             <div style='background:linear-gradient(135deg, #667eea, #764ba2);color:white;padding:1rem;border-radius:12px;text-align:center;margin:1rem 0;'>
                 <div style='font-size:0.9rem;opacity:0.9;'>Total Amount</div>
                 <div style='font-size:2rem;font-weight:800;'>GHS {total}</div>
+                {f"<div style='font-size:0.8rem;'>You saved GHS {discount_amount}!</div>" if discount > 0 else ""}
             </div>
         """, unsafe_allow_html=True)
         
@@ -1457,6 +2013,10 @@ if "selected" in st.session_state:
                     client = get_sheets_client()
                     orders_sheet = client.open("retro_jersey_shop").worksheet("orders")
                     orders_sheet.append_row([name, phone, location, p["name"], qty, total, ref, timestamp, "Pending"])
+                    
+                    # Update streak
+                    st.session_state.streak += 1
+                    add_coins(50)  # Big reward for ordering
                     
                     # Async notifications
                     telegram_msg = f"""🛒 NEW ORDER!
@@ -1499,16 +2059,21 @@ if "selected" in st.session_state:
                                 <strong>Product:</strong> {p['name']}<br>
                                 <strong>Total:</strong> GHS {total}<br>
                                 <strong>Phone:</strong> {phone}<br><br>
+                                🎉 You earned 50 coins!<br>
+                                🔥 Streak: {st.session_state.streak} days<br>
                                 We'll contact you shortly for delivery confirmation!
                             </div>
                         </div>
                     """, unsafe_allow_html=True)
                     
+                    # Confetti effect
+                    st.balloons()
+                    
                     if "selected" in st.session_state:
                         del st.session_state.selected
                     
                     # Auto-refresh after 3 seconds
-                    time.sleep(3)
+                    time.sleep(10)
                     st.rerun()
                     
                 except Exception as e:
